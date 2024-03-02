@@ -1,0 +1,9 @@
+
+::ng-deep .p-treenode-label:hover  {
+    cursor: pointer;
+    color: #007E6E;
+}
+
+/* ::ng-deep .p-treenode-icon {
+    color: #007E6E;
+} */

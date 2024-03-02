@@ -13,7 +13,7 @@ export class ZookeeperService {
 
   constructor(private http: HttpClient) { }
 
-  getAllZnodes() : Observable<ZNode[]> {
-    return this.http.get<ZNode[]>(`${environment.apiUrl}/${this.zookeeperApiUrl}/nodes`);
+  getAllZnodesWithChildren(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/${this.zookeeperApiUrl}/allnodes`)
   }
 }

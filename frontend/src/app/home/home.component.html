@@ -1,8 +1,14 @@
+<div class="bg-dark" style="height: 100% !important;">
 <h1 style="color: green;">User managament - ZooKeeper</h1>
 <hr>
 
-<app-nodes [zNodes]="zNodes"></app-nodes>
-
-<p *ngIf="response">
-    {{response.msg}}
-</p>
+<div class="grid">
+    <div class="col-fixed bg-white" style="height: 100vh;">
+        <app-node-tree></app-node-tree>
+    </div>
+    <div class="col">
+        <div class="text-center p-3 border-round-sm bg-primary font-bold">auto</div>
+    </div>
+</div>
+  
+</div>
