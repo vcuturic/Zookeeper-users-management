@@ -14,6 +14,6 @@ export class ZookeeperService {
   constructor(private http: HttpClient) { }
 
   getAllZnodesWithChildren(): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/${this.zookeeperApiUrl}/allnodes`)
+    return this.http.get<any>(`${environment.apiUrl}/${this.zookeeperApiUrl}/servernodes`)
   }
 }

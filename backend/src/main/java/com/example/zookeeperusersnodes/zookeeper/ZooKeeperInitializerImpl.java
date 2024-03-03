@@ -1,4 +1,4 @@
-package com.example.zookeeperusersnodes.config;
+package com.example.zookeeperusersnodes.zookeeper;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.zookeeper.*;
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component("ZooKeeperInitializer")
-public class ZooKeeperInitializer {
+public class ZooKeeperInitializerImpl implements ZooKeeperInitializer{
     private final static String connectionString = "localhost:2181";
     private final static int sessionTimeout = 3000;
     private ZooKeeper zooKeeper;
@@ -33,6 +33,7 @@ public class ZooKeeperInitializer {
             zooKeeper.create("/election", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
+    @Override
     public ZooKeeper getZooKeeperInstance() {
         return zooKeeper;
     }
