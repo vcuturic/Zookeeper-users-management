@@ -1,0 +1,8 @@
+li {
+    list-style: none; 
+}
+
+.listItem:hover {
+    color: #689253;
+    cursor: pointer;
+}

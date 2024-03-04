@@ -1,0 +1,18 @@
+<svg width="400" height="400">
+    <circle *ngFor="let znode of zNodes; let i = index"
+      [attr.cx]="50 + i * 100" 
+      cy="100" 
+      r="45" 
+      fill="#689253"
+      stroke-width="2"
+    />
+    <text *ngFor="let znode of zNodes; let i = index"
+      [attr.x]="50 + i * 100" 
+      y="100" 
+      text-anchor="middle" 
+      fill="white"
+      dy=".3em"
+    >
+      {{ znode.name }}
+    </text>
+  </svg>

@@ -1,9 +1,18 @@
-
-::ng-deep .p-treenode-label:hover  {
-    cursor: pointer;
-    color: #007E6E;
+.sidebar {
+    border-right: 4px solid #689253; /* Blue border */
+    padding-right: 10px;
+    font-family: Consolas, Courier New, monospace;
+    color: #CCCCCC;
 }
 
-/* ::ng-deep .p-treenode-icon {
-    color: #007E6E;
-} */
+hr {
+    border-color: #689253;
+    border: 2px solid #689253;
+}
+
+.tree-list {
+    
+    list-style: none; 
+    padding-left: 0; 
+    
+}

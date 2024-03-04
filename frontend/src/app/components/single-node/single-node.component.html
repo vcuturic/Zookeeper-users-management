@@ -1,0 +1,15 @@
+<li>
+  <div class="listItem p-2" (click)="toggleChildrenVisibility()">
+    <span *ngIf="zNode.children && zNode.children.length">
+      <i *ngIf="!expanded" class="pi pi-fw pi-angle-right"></i>
+      <i *ngIf="expanded" class="pi pi-fw pi-angle-down"></i>
+    </span>
+    <i class="pi pi-fw pi-database icon"></i>
+    <span >{{ zNode.name }}</span>
+  </div>
+  <ul *ngIf="expanded && zNode.children && zNode.children.length">
+    <li *ngFor="let child of zNode.children">
+        <app-single-node  [zNode]="child"></app-single-node>
+    </li>
+  </ul>
+</li>

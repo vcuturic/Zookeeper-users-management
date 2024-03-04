@@ -1,3 +1,8 @@
-<div class="card flex justify-content-center">
-  <p-tree class="w-full md:w-18rem" scrollHeight="100vh" [virtualScroll]="true" [virtualScrollItemSize]="35" [value]="treeNodeList"></p-tree>
+<div class="sidebar">
+  <h3 class="ml-3">Path: /</h3>
+  <hr>
+  <ul class="tree-list">
+    <app-single-node *ngFor="let zNode of zNodes" [zNode]="zNode"></app-single-node>
+  </ul>
 </div>
+
