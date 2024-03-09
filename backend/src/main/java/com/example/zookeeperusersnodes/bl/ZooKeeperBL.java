@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ZooKeeperBL {
     List<NodeDTO> getZookeeperServerNodes();
+    List<String> getAllNodesChildren();
+    List<String> getLiveNodesChildren();
 }

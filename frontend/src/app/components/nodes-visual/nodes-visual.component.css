@@ -1,0 +1,13 @@
+@import "primeicons/primeicons.css";
+
+.node:hover {
+    cursor: pointer;
+}
+
+.node:hover rect {
+    fill: #CCCCCC;
+}
+
+.node:hover text {
+    fill: black; /* Change to your desired hover color for the text */
+}

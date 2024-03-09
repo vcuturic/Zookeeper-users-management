@@ -1,4 +1,5 @@
 package com.example.zookeeperusersnodes.bl;
+import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
 import com.example.zookeeperusersnodes.zookeeper.ZooKeeperInitializer;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
 import org.apache.zookeeper.KeeperException;
@@ -24,6 +25,16 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
         List<NodeDTO> zNodes = new ArrayList<>();
         this.populateZookeeperNodes("/", zNodes);
         return zNodes;
+    }
+
+    @Override
+    public List<String> getAllNodesChildren() {
+        return ClusterInfo.getClusterInfo().getAllNodes();
+    }
+
+    @Override
+    public List<String> getLiveNodesChildren() {
+        return ClusterInfo.getClusterInfo().getLiveNodes();
     }
 
     public void populateZookeeperNodes(String path, List<NodeDTO> parentsChildren) {

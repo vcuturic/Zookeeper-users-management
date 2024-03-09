@@ -1,5 +1,4 @@
 package com.example.zookeeperusersnodes.api;
-
 import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,5 +18,20 @@ public class ZookeeperController {
     @GetMapping("/servernodes")
     public List<NodeDTO> getZookeeperServerNodes() {
         return this.zooKeeperBL.getZookeeperServerNodes();
+    }
+
+    @GetMapping("/allnodes")
+    public List<String> getAllNodesChildren() {
+        return this.zooKeeperBL.getAllNodesChildren();
+    }
+
+    @GetMapping("/livenodes")
+    public List<String> getLiveNodesChildren() {
+        return this.zooKeeperBL.getLiveNodesChildren();
+    }
+
+    @GetMapping("/availability")
+    public String checkServerAvailability() {
+        return "{\"msg\": \"Server is available\"}";
     }
 }

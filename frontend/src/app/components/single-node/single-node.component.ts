@@ -16,7 +16,8 @@ export class SingleNodeComponent {
 
   expanded = false;
 
-  toggleChildrenVisibility(): void {
-    this.expanded = !this.expanded;
+  toggleChildrenVisibility(zNode: ZNode): void {
+    if(zNode.children)
+      this.expanded = !this.expanded;
   }
 }

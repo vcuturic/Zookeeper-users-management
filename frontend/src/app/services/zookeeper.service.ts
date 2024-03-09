@@ -13,7 +13,16 @@ export class ZookeeperService {
 
   constructor(private http: HttpClient) { }
 
-  getAllZnodesWithChildren(): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/${this.zookeeperApiUrl}/servernodes`)
+
+  getAllZnodesWithChildren(backEndUrl: string): Observable<any> {
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/servernodes`)
+  }
+
+  getAllNodesChildren(backEndUrl: string): Observable<any> {
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allnodes`);
+  }
+
+  getLiveNodesChildren(backEndUrl: string): Observable<any> {
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/livenodes`);
   }
 }

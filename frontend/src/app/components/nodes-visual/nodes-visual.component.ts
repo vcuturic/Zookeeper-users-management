@@ -14,4 +14,7 @@ import { ZNode } from '../../models/znode';
 export class NodesVisualComponent {
   @Input({required: true}) zNodes!: ZNode[]; 
 
+  handleZNodeClick(zNode: ZNode) {
+    console.log(`Clicked ${zNode.name}`);
+  }
 }
