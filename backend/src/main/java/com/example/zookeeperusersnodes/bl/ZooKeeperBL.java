@@ -8,4 +8,6 @@ public interface ZooKeeperBL {
     List<NodeDTO> getZookeeperServerNodes();
     List<String> getAllNodesChildren();
     List<String> getLiveNodesChildren();
+    String getLeaderInfo();
+    String getLeaderAddress();
 }

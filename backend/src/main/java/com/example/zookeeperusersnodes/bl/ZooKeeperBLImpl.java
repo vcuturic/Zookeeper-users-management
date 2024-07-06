@@ -37,6 +37,16 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
         return ClusterInfo.getClusterInfo().getLiveNodes();
     }
 
+    @Override
+    public String getLeaderInfo() {
+        return ClusterInfo.getClusterInfo().getLeaderNode();
+    }
+
+    @Override
+    public String getLeaderAddress() {
+        return ClusterInfo.getClusterInfo().getLeaderAddress();
+    }
+
     public void populateZookeeperNodes(String path, List<NodeDTO> parentsChildren) {
         List<String> children = null;
 

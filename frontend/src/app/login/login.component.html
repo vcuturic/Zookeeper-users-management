@@ -1,0 +1,20 @@
+<div class="flex flex-wrap align-items-center justify-content-center">
+  <div class="flex flex-wrap w-3 bg-white border-round-xs align-items-center justify-content-center p-4">
+    <h2>Login</h2><br>
+    <form [formGroup]="loginForm" class="flex flex-wrap align-items-center justify-content-center gap-4 w-11">
+      <div>
+        <p-inputGroup>
+          <p-inputGroupAddon> <i class="pi pi-user"></i> </p-inputGroupAddon>
+          <input pInputText placeholder="Username" formControlName="username" required/>
+        </p-inputGroup>
+      </div>
+      <div>
+        <p-password [toggleMask]="true"  [feedback]="false" placeholder="Password" formControlName="password"/>
+      </div>
+      <div>
+        <p-button type="submit" label="Login" severity="success" type="submit" [disabled]="!loginForm.valid" (click)="login()"></p-button>
+      </div>
+    </form>
+  </div>
+</div>
+  

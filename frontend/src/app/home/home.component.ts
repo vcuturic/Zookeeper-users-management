@@ -11,13 +11,15 @@ import * as Constants from '../constants/constants';
 import * as ConnectionState from '../constants/rx-stomp-constants'
 import { environment } from '../../environments/environment';
 import { ConfigurationService } from '../services/configuration.service';
+import { ChatComponent } from '../components/chat/chat.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
     NodeTreeComponent,
-    NodesVisualComponent
+    NodesVisualComponent,
+    ChatComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'

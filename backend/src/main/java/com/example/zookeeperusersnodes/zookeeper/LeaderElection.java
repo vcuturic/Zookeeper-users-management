@@ -3,6 +3,7 @@ import com.example.zookeeperusersnodes.realtime.NotificationService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.net.InetAddress;
@@ -106,9 +107,18 @@ public class LeaderElection implements Watcher {
                 zooKeeper.addWatch(ALL_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 zooKeeper.addWatch(LIVE_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 ClusterInfo.getClusterInfo().setLeaderNode(currentZNode);
+                System.out.println("ADDRESS " + getServerInfo());
+                ClusterInfo.getClusterInfo().setLeaderAddress(getServerInfo());
             } else {
                 System.out.println("I am not the leader." + currentZNode);
                 ClusterInfo.getClusterInfo().setLeaderNode(ELECTION_PATH + "/" + children.getFirst());
+                // TODO We need to get serverInfo from the leader node and set it here, that's why we are
+                // getting null
+                String leaderPath = ELECTION_PATH + "/" + children.getFirst();
+                Stat stat = zooKeeper.exists(leaderPath, true);
+                byte[] data = zooKeeper.getData(leaderPath, false, stat);
+                String leaderAddress = new String(data);
+                ClusterInfo.getClusterInfo().setLeaderAddress(leaderAddress);
             }
 
             // Whether the node is leader or not, add it to /all_nodes and /live_nodes

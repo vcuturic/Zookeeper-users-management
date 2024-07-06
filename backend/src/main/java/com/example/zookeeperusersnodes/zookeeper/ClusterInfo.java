@@ -1,5 +1,7 @@
 package com.example.zookeeperusersnodes.zookeeper;
 
+import org.antlr.v4.runtime.misc.Pair;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +9,7 @@ public class ClusterInfo {
     private List<String> allNodes = new ArrayList<>();
     private List<String> liveNodes = new ArrayList<>();
     private String leaderNode;
+    private String leaderAddress;
     private static ClusterInfo clusterInfo = new ClusterInfo();
 
     public static ClusterInfo getClusterInfo() {
@@ -35,5 +38,13 @@ public class ClusterInfo {
 
     public void setLeaderNode(String leaderNode) {
         this.leaderNode = leaderNode;
+    }
+
+    public String getLeaderAddress() {
+        return leaderAddress;
+    }
+
+    public void setLeaderAddress(String leaderAddress) {
+        this.leaderAddress = leaderAddress;
     }
 }
