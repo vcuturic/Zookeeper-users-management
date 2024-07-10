@@ -48,7 +48,7 @@ public class ZookeeperController {
     }
 
     // SERVICE B
-    @GetMapping("/fetch-data-2")
+    @GetMapping("/fetch-data")
     public String fetchData() {
         // Here we need zookeeper instance to get the first instance of /election
         // for that is the leader

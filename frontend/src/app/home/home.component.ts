@@ -8,10 +8,13 @@ import { Message } from '@stomp/stompjs';
 import { Subscription } from 'rxjs';
 import { MessageStructure } from '../models/message-structure';
 import * as Constants from '../constants/constants';
-import * as ConnectionState from '../constants/rx-stomp-constants'
+
 import { environment } from '../../environments/environment';
 import { ConfigurationService } from '../services/configuration.service';
-import { ChatComponent } from '../components/chat/chat.component';
+import { ChatComponent } from '../components/chat/chat-component/chat.component';
+import { UserListComponent } from '../components/chat/user-list/user-list.component';
+import { BackendInfoService } from '../services/backend-info.service';
+import { BackendService } from '../services/backend.service';
 
 @Component({
   selector: 'app-home',
@@ -19,7 +22,8 @@ import { ChatComponent } from '../components/chat/chat.component';
   imports: [
     NodeTreeComponent,
     NodesVisualComponent,
-    ChatComponent
+    ChatComponent,
+    UserListComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
@@ -28,99 +32,25 @@ export class HomeComponent implements OnInit, OnDestroy{
 
   zNodes: ZNode[] = [];
   allNodesChildren: ZNode[] = [];
-  receivedMessages: string[] = [];
-  availableBackEndUrl?: string;
-  lastAttemptedWebSocketUrl: string = environment.websocketUrl1;
-  connectedToBackend: boolean = false;
-  connectingToBackend: boolean = false;
-
   private topicSubscription?: Subscription;
+  private subscription: Subscription;
+  private updateMessagesFromBackend: string = ''
+  initTriggered: boolean = false;
 
   constructor(
-    private zooKeeperService: ZookeeperService,
+    private backendService: BackendService,
+    private backendInfoService: BackendInfoService,
     private rxStompService: RxStompService,
-    private configurationService: ConfigurationService
-    ) {}
+    ) {
+      // if some backend instance failed durning login page, we need to read it and fix it
+      this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
+        this.updateMessagesFromBackend = value;
+        this.handleBackendMessages(value);
+      });
+    }
+  
 
-  ngOnInit(): void {
-    
-    this.rxStompService.onConnecting().subscribe((serverUrl: string) => {
-      this.lastAttemptedWebSocketUrl = serverUrl;
-      console.log(`Attempting to connect to WebSocket url: ${serverUrl}`);
-    });
-
-    this.rxStompService.connectionState$.subscribe((state: number) => {
-      // console.log("Connection state:", state);
-      if(state == ConnectionState.CONNECTING && !this.connectingToBackend && !this.connectedToBackend) {
-        this.checkBackendAvailability(0);
-        this.connectingToBackend = true;
-      }
-      if(state == ConnectionState.CLOSED)
-        this.connectedToBackend = false;
-
-      if(this.lastAttemptedWebSocketUrl && (state == ConnectionState.CLOSED || state == ConnectionState.OPEN)) {
-        const portNumber = this.lastAttemptedWebSocketUrl.split(":")[2].split("/")[0];
-        const processedZNode = this.allNodesChildren.find(zNode => zNode.name.includes(portNumber));
-
-        if(processedZNode) {
-          const newMessage: MessageStructure = {
-            operation: "",
-            zNode: processedZNode
-          }
-
-          if(state == ConnectionState.CLOSED) {
-            newMessage.operation = Constants.OPERATION_DELETE;
-          }
-          else if(state == ConnectionState.OPEN) {
-            if(this.allNodesChildren.length == 0)
-              newMessage.operation = Constants.OPERATION_CONNECT;
-            else 
-              newMessage.operation = Constants.OPERATION_RECONNECT;
-          }
-
-          console.log(newMessage);
-          this.handleBackendMessages(JSON.stringify(newMessage));
-        }
-      }
-    });
-
-    this.topicSubscription = this.rxStompService
-      .watch(Constants.DESTINATION_ROUTE)
-      .subscribe((message: Message) => {
-        this.handleBackendMessages(message.body);
-    });
-  }
-
-  async checkBackendAvailability(currentBackendIndex: number) {
-    const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
-    console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    this.configurationService.checkForAvailableBackendUrl(backendUrls[currentBackendIndex]).subscribe({
-      next: (res: any) => {
-        if(res) {
-          this.availableBackEndUrl = backendUrls[currentBackendIndex];
-          console.log("Successfully connected to Backend url: " + backendUrls[currentBackendIndex]);
-          this.getAllZnodesAndChildren();
-          this.getAllNodesChildren();
-          this.connectedToBackend = true;
-          this.connectingToBackend = false;
-        }
-      },
-      error: (err: any) => {
-        if(currentBackendIndex+1 < backendUrls.length) {
-          console.log("Failed to connect to Backend url: " + backendUrls[currentBackendIndex]);
-          this.checkBackendAvailability(++currentBackendIndex);
-        }
-        else {
-          console.warn(err);
-          this.checkBackendAvailability(0);
-        }
-      }
-    });
-  }
-
-  handleBackendMessages(jsonString: string) {
+  private handleBackendMessages(jsonString: string) {
     if(jsonString) {
       const msg: MessageStructure = JSON.parse(jsonString);
 
@@ -151,75 +81,31 @@ export class HomeComponent implements OnInit, OnDestroy{
     }
   }
 
+  ngOnInit(): void {
+    this.backendInfoService.getBackendUrl().subscribe((url) => {
+      if (url === 'none') {
+        this.backendService.init();
+        this.initTriggered = true;
+      } else {
+        // Handle the case when backendUrl is updated
+        console.log('Backend URL updated: ', url, this.initTriggered);
+        this.backendService.getAllZnodesAndChildren(this.zNodes, url);
+        this.backendService.getAllNodesChildren(this.allNodesChildren, url);
+        this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
+
+        // Subscription resets when components change, so we need to refresh subscription
+        if(!this.initTriggered) {
+          this.topicSubscription = this.rxStompService
+            .watch(Constants.DESTINATION_ROUTE)
+            .subscribe((message: Message) => {
+              this.handleBackendMessages(message.body);
+          });
+        }
+      }
+    });  
+  }
+
   ngOnDestroy(): void {
-    if(this.topicSubscription)
-      this.topicSubscription.unsubscribe();
+    this.backendService.destruct();
   }
-
-  sendMessage() {
-    const message = `Message generated at ${new Date()}`;
-    this.rxStompService.publish({destination: '/app/hello', body: message})
-  }
-
-  getAllNodesChildren() {
-    this.zooKeeperService.getAllNodesChildren(this.availableBackEndUrl!).subscribe({
-      next: (res: any) => {
-        if(res) {
-          if(this.allNodesChildren)
-            this.allNodesChildren = [];
-          for (let i = 0; i < res.length; i++) {
-            const newNode: ZNode = {
-              name: res[i],
-              children: [],
-              online: false
-            }
-            this.allNodesChildren.push(newNode);
-          }
-
-          this.getLiveNodesChildren();
-        }
-      },
-      error: (err: any) => {
-        this.checkBackendAvailability(0);
-      }
-    });
-  }
-
-  getLiveNodesChildren() {
-    this.zooKeeperService.getLiveNodesChildren(this.availableBackEndUrl!).subscribe({
-      next: (res: any) => {
-        if(res) {
-          if(this.allNodesChildren) {
-            for (let i = 0; i < res.length; i++) {
-              const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === res[i]);
-              if(foundIndex != -1)
-                this.allNodesChildren[foundIndex].online = true;
-            }
-          }
-        }
-      },
-      error: (err: any) => {
-        this.checkBackendAvailability(0);
-      }
-    });
-  }
-
-  getAllZnodesAndChildren() {
-    this.zooKeeperService.getAllZnodesWithChildren(this.availableBackEndUrl!).subscribe({
-      next: (res: any) => {
-        if(res) {
-          const list = res[0].children;
-
-          for (let i = 0; i < list.length; i++) {
-            this.zNodes.push(list[i]);
-          }
-
-        }
-      },
-      error: (err: any) => {
-        this.checkBackendAvailability(0);
-      }
-    });
-  }
-
 }

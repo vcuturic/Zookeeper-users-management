@@ -1,22 +1,47 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
+import { LoginData } from '../models/login-data';
+import { HttpClient } from '@angular/common/http';
+import { BackendInfoService } from './backend-info.service';
+import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
+export class AuthService implements OnDestroy{
 
   username?: string;
   userList: string[] = [];
+  
+  private backendUrl: string = '';
+  private subscription: Subscription;
+  private authApiUrl = "auth";
 
   constructor(
     private cookieService: CookieService,
-  ) { }
+    private http: HttpClient,
+    private backendInfoService: BackendInfoService
+  ) { 
+    this.subscription = this.backendInfoService.backendUrl$.subscribe(value => {
+      this.backendUrl = value;
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
 
   isAuthenticated(): boolean
   {
-    // console.log(this.username + " AUTHENTICATED: " + this.isUserInList(this.username));
     return this.cookieService.get("username") ? true : false;
+  }
+
+  login(loginData: LoginData) {
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData);
+  }
+
+  getUsername(): string {
+    return this.cookieService.get("username");
   }
 
   // Function to store the list in cookies

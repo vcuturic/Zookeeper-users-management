@@ -1,4 +1,4 @@
-package com.example.zookeeperusersnodes.realtime;
+package com.example.zookeeperusersnodes.models;
 
 import com.example.zookeeperusersnodes.dto.NodeDTO;
 

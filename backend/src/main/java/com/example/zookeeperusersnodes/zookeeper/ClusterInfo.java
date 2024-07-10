@@ -10,10 +10,15 @@ public class ClusterInfo {
     private List<String> liveNodes = new ArrayList<>();
     private String leaderNode;
     private String leaderAddress;
-    private static ClusterInfo clusterInfo = new ClusterInfo();
+    private static final ClusterInfo clusterInfo = new ClusterInfo();
 
     public static ClusterInfo getClusterInfo() {
         return clusterInfo;
+    }
+
+    public static void updateClusterInfo(ClusterInfo leaderClusterInfo) {
+        clusterInfo.setAllNodes(leaderClusterInfo.getAllNodes());
+        clusterInfo.setLiveNodes(leaderClusterInfo.getLiveNodes());
     }
 
     public List<String> getAllNodes() {

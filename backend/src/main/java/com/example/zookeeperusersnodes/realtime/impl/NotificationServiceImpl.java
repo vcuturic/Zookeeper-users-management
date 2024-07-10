@@ -1,5 +1,7 @@
-package com.example.zookeeperusersnodes.realtime;
+package com.example.zookeeperusersnodes.realtime.impl;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.models.Message;
+import com.example.zookeeperusersnodes.realtime.interfaces.NotificationService;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 

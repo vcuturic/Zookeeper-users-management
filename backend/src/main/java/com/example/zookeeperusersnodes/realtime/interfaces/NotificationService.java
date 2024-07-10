@@ -1,4 +1,4 @@
-package com.example.zookeeperusersnodes.realtime;
+package com.example.zookeeperusersnodes.realtime.interfaces;
 
 public interface NotificationService {
     String OPERATION_DELETE = "delete";

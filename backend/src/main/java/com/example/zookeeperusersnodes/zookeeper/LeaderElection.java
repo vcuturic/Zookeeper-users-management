@@ -1,11 +1,15 @@
 package com.example.zookeeperusersnodes.zookeeper;
-import com.example.zookeeperusersnodes.realtime.NotificationService;
+import com.example.zookeeperusersnodes.constants.NodePaths;
+import com.example.zookeeperusersnodes.realtime.interfaces.NotificationService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -15,12 +19,14 @@ public class LeaderElection implements Watcher {
 
     @Value("${server.port}")
     private int serverPort;
-    private static final String ELECTION_PATH = "/election";
-    private static final String ALL_NODES_PATH = "/all_nodes";
-    private static final String LIVE_NODES_PATH = "/live_nodes";
+    private static final String ELECTION_PATH = NodePaths.ELECTION_PATH;
+    private static final String ALL_NODES_PATH = NodePaths.ALL_NODES_PATH;
+    private static final String LIVE_NODES_PATH = NodePaths.LIVE_NODES_PATH;
     private String currentZNode;
     private final ZooKeeper zooKeeper;
     private final NotificationService notificationService;
+    @Autowired
+    private RestTemplate restTemplate;
 
     public LeaderElection(ZooKeeperInitializer zooKeeperInitializer, NotificationService notificationService) {
         this.zooKeeper = zooKeeperInitializer.getZooKeeperInstance();
@@ -107,7 +113,6 @@ public class LeaderElection implements Watcher {
                 zooKeeper.addWatch(ALL_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 zooKeeper.addWatch(LIVE_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 ClusterInfo.getClusterInfo().setLeaderNode(currentZNode);
-                System.out.println("ADDRESS " + getServerInfo());
                 ClusterInfo.getClusterInfo().setLeaderAddress(getServerInfo());
             } else {
                 System.out.println("I am not the leader." + currentZNode);
@@ -118,7 +123,12 @@ public class LeaderElection implements Watcher {
                 Stat stat = zooKeeper.exists(leaderPath, true);
                 byte[] data = zooKeeper.getData(leaderPath, false, stat);
                 String leaderAddress = new String(data);
+                System.out.println("New Leader:  " + leaderPath + leaderAddress);
                 ClusterInfo.getClusterInfo().setLeaderAddress(leaderAddress);
+                // TODO Communication with leader node (one route should be this zNode asking for update from leader)
+                // for ex. This zNode connected later, and don't have the relevant data
+                String url = "http://" + leaderAddress + "/comm/clusterInfo"; // URL of ServiceA
+                ClusterInfo.updateClusterInfo(Objects.requireNonNull(restTemplate.getForObject(url, ClusterInfo.class)));
             }
 
             // Whether the node is leader or not, add it to /all_nodes and /live_nodes

@@ -10,4 +10,6 @@ public interface ZooKeeperBL {
     List<String> getLiveNodesChildren();
     String getLeaderInfo();
     String getLeaderAddress();
+    void addZNode(String username);
+    void addMessageZNode(String username, String message);
 }

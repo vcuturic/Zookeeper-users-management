@@ -31,6 +31,8 @@ public class ZooKeeperInitializerImpl implements ZooKeeperInitializer{
             zooKeeper.create("/live_nodes", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         if (zooKeeper.exists("/election", false) == null)
             zooKeeper.create("/election", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if (zooKeeper.exists("/messages", false) == null)
+            zooKeeper.create("/messages", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
     @Override

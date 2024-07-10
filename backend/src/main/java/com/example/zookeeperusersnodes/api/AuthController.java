@@ -1,17 +1,26 @@
 package com.example.zookeeperusersnodes.api;
 
-import com.example.zookeeperusersnodes.zookeeper.DataStorage;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
+import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
+import com.example.zookeeperusersnodes.dto.UserDTO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    @GetMapping("/login")
-    public void Login() {
-        // TODO when user logs in just add it to DataStorage for now
-//        DataStorage.addPersonToList(person);
+    private final ZooKeeperBL zooKeeperBL;
+
+    public AuthController(ZooKeeperBL zooKeeperBL) {
+        this.zooKeeperBL = zooKeeperBL;
+    }
+    @PostMapping("/login")
+    public ResponseEntity<ServerResponseDTO> Login(@RequestBody UserDTO userDTO) {
+        this.zooKeeperBL.addZNode(userDTO.getUsername());
+
+        ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged in.");
+
+        return ResponseEntity.ok(serverResponse);
     }
 }

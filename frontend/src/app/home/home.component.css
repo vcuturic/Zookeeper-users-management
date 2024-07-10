@@ -3,3 +3,7 @@
     color: white;
   }
   
+  .main-chat-container {
+    display: flex;
+  }  
+  
