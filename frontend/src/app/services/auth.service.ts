@@ -40,6 +40,11 @@ export class AuthService implements OnDestroy{
     return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData);
   }
 
+  deleteCookies() {
+    this.cookieService.delete("username");
+    this.removeUserFromList(this.username!);
+  }
+
   getUsername(): string {
     return this.cookieService.get("username");
   }

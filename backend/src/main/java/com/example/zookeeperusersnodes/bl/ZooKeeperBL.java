@@ -11,5 +11,6 @@ public interface ZooKeeperBL {
     String getLeaderInfo();
     String getLeaderAddress();
     void addZNode(String username);
+    void removeZNodeFromLiveNodes(String username);
     void addMessageZNode(String username, String message);
 }

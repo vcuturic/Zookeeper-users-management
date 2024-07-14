@@ -1,4 +1,8 @@
-<div class="flex flex-wrap align-items-center justify-content-center">
+<div *ngIf="loading; else loadedTemplate">
+  <app-loading></app-loading>
+</div>
+<ng-template #loadedTemplate>
+<div class="flex flex-wrap align-items-center justify-content-center min-h-screen">
   <div class="flex flex-wrap w-3 bg-white border-round-xs align-items-center justify-content-center p-4">
     <h2>Login</h2><br>
     <form [formGroup]="loginForm" class="flex flex-wrap align-items-center justify-content-center gap-4 w-11">
@@ -17,4 +21,5 @@
     </form>
   </div>
 </div>
+</ng-template>
   

@@ -75,6 +75,20 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
     }
 
     @Override
+    public void removeZNodeFromLiveNodes(String username) {
+        String newNodeName = "/" + username;
+
+        try {
+            if(zooKeeper.exists(NodePaths.LIVE_NODES_PATH + newNodeName, false) != null) {
+                // THEN, the node went offline
+                zooKeeper.delete(NodePaths.LIVE_NODES_PATH + newNodeName, -1);
+            }
+        } catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addMessageZNode(String username, String message) {
         String newNodeName = "/" + username;
 

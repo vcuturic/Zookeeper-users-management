@@ -1,9 +1,25 @@
+@import "primeicons/primeicons.css";
+
 .zookeeper-header {
-    background-color: #689253; /* Green color reminiscent of Zookeeper theme */
-    color: white;
-  }
+  background-color: #689253; /* Green color reminiscent of Zookeeper theme */
+  color: white;
+}
   
-  .main-chat-container {
-    display: flex;
-  }  
+.main-chat-container {
+  display: flex;
+}  
+
+.user-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+::ng-deep .p-button-link {
+  color: white;
+  font-size: 10pt;
+}
+  
+  
+  
   

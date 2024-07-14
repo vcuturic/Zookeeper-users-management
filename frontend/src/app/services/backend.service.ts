@@ -20,9 +20,17 @@ export class BackendService {
   lastAttemptedWebSocketUrl: string = environment.websocketUrl1;
   connectedToBackend: boolean = false;
   connectingToBackend: boolean = false;
+  failMessageSendToBackendInfo: boolean = false;
+  // WebSocket connects on the next instance, while backend instance connects from the first
+  // and they load until both are connected to the same instance. This index will act as same
+  // as websocket url
+  currentBackendIndex: number = 0; 
 
   private updateMessagesFromBackendSubject = new BehaviorSubject<string>('');
   updateMessagesFromBackend$ = this.updateMessagesFromBackendSubject.asObservable();
+
+  private connectingToBackendSubject = new BehaviorSubject<boolean>(false);
+  connectingToBackend$ = this.connectingToBackendSubject.asObservable();
   
   allNodesChildren: ZNode[] = [];
   private topicSubscription?: Subscription;
@@ -34,6 +42,10 @@ export class BackendService {
     private zooKeeperService: ZookeeperService,
   ) { }
 
+  setConnectingStatus(newValue: boolean) {
+    this.connectingToBackendSubject.next(newValue);
+  }
+
   init() {
     this.rxStompService.onConnecting().subscribe((serverUrl: string) => {
       this.lastAttemptedWebSocketUrl = serverUrl;
@@ -42,8 +54,11 @@ export class BackendService {
 
     this.rxStompService.connectionState$.subscribe((state: number) => {
       if(state == ConnectionState.CONNECTING && !this.connectingToBackend && !this.connectedToBackend) {
-        this.checkBackendAvailability(0);
+        if(this.currentBackendIndex >= 3)
+          this.currentBackendIndex = 0;
+        this.checkBackendAvailability(this.currentBackendIndex++);
         this.connectingToBackend = true;
+        this.setConnectingStatus(true);
       }
       if(state == ConnectionState.CLOSED)
         this.connectedToBackend = false;
@@ -86,31 +101,35 @@ export class BackendService {
   }
 
   async checkBackendAvailability(currentBackendIndex: number) {
-    const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
-    console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    if(!this.connectedToBackend) {
+      const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
+      console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-    this.configurationService.checkForAvailableBackendUrl(backendUrls[currentBackendIndex]).subscribe({
-      next: (res: any) => {
-        if(res) {
-          this.availableBackEndUrl = backendUrls[currentBackendIndex];
-          console.log("Successfully connected to Backend url: " + backendUrls[currentBackendIndex]);
-          this.backendInfoService.setBackendUrl(backendUrls[currentBackendIndex]);
-          this.connectedToBackend = true;
-          this.connectingToBackend = false;
+      this.configurationService.checkForAvailableBackendUrl(backendUrls[currentBackendIndex]).subscribe({
+        next: (res: any) => {
+          if(res) {
+            this.availableBackEndUrl = backendUrls[currentBackendIndex];
+            console.log("Successfully connected to Backend url: " + backendUrls[currentBackendIndex]);
+            this.backendInfoService.setBackendUrl(backendUrls[currentBackendIndex]);
+            this.connectedToBackend = true;
+            this.connectingToBackend = false;
+            this.setConnectingStatus(false);
+            this.failMessageSendToBackendInfo = false;
+          }
+        },
+        error: (err: any) => {
+          if(currentBackendIndex+1 < backendUrls.length) {
+            console.log("Failed to connect to Backend url: " + backendUrls[currentBackendIndex]);
+            this.checkBackendAvailability(++currentBackendIndex);
+          }
+          else {
+            console.warn(err);
+            this.checkBackendAvailability(0);
+          }
         }
-      },
-      error: (err: any) => {
-        if(currentBackendIndex+1 < backendUrls.length) {
-          console.log("Failed to connect to Backend url: " + backendUrls[currentBackendIndex]);
-          this.checkBackendAvailability(++currentBackendIndex);
-        }
-        else {
-          console.warn(err);
-          this.checkBackendAvailability(0);
-        }
-      }
-    });
+      });
+    }
   }
 
   storeBackendMessages(jsonString: string) {

@@ -1,11 +1,24 @@
-<div class="flex justify-content-center flex-wrap zookeeper-header">
-    <div class="flex align-items-center justify-content-center h-4rem font-bold">
-        <img src="assets/zookeeper_logo.png" height="100px" alt="Logo">
+<div *ngIf="loading; else loadedTemplate">
+    <app-loading></app-loading>
+</div>
+<ng-template #loadedTemplate>
+<div class="grid nested-grid h-5rem zookeeper-header">
+    <div class="col"></div>
+    <div class="flex col align-items-center">
+        <div class="grid ">
+            <div class="flex col-3 justify-content-center align-items-center h-6rem">
+                <img src="assets/zookeeper_logo.png" height="100px" alt="Logo" style="position: absolute;">
+            </div>
+            <div class="flex col justify-content-center align-items-center w-30rem h-6rem">
+                <span class="title" style="color: white;">Zookeeper users management</span>
+            </div>
+        </div>
     </div>
-    <div class="flex align-items-center justify-content-end h-4rem">
-        <span class="title">Zookeeper users management</span>
+    <div class="flex col justify-content-end align-items-center h-5rem">
+        <p-button label="Logout" [link]="true" icon="pi pi-sign-out" iconPos="right" (onClick)="logout()"/>
     </div>
 </div>
+  
 
 <div class="grid grid-nogutter">
     <div class="col-fixed bg-dark" style="height: 100vh; width: 20%;">
@@ -21,3 +34,4 @@
         </div>
     </div>
 </div>
+</ng-template>

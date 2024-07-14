@@ -23,4 +23,14 @@ public class AuthController {
 
         return ResponseEntity.ok(serverResponse);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ServerResponseDTO> Logout(@CookieValue(value = "username", defaultValue = "ss") String username) {
+        // TODO Remove user from /live_nodes
+
+        System.out.println("Cookie Value: " + username);
+        ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged out.");
+
+        return ResponseEntity.ok(serverResponse);
+    }
 }

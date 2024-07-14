@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CookieService } from 'ngx-cookie-service';
 import { AuthService } from '../services/auth.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -8,20 +7,12 @@ import { PasswordModule } from 'primeng/password';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { ButtonModule } from 'primeng/button';
-import { ChatService } from '../services/chat.service';
 import { LoginData } from '../models/login-data';
-import * as Constants from '../constants/constants';
-import * as ConnectionState from '../constants/rx-stomp-constants'
-import { RxStompService } from '../services/rx-stomp.service';
-import { environment } from '../../environments/environment';
-import { Subscription } from 'rxjs';
-import { ZNode } from '../models/znode';
-import { MessageStructure } from '../models/message-structure';
-import { Message } from '@stomp/stompjs';
-import { ConfigurationService } from '../services/configuration.service';
-import { BackendInfoService } from '../services/backend-info.service';
-import { ZookeeperService } from '../services/zookeeper.service';
 import { BackendService } from '../services/backend.service';
+import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { BackendInfoService } from '../services/backend-info.service';
+import { LoadingComponent } from '../components/loading/loading.component';
 
 @Component({
   selector: 'app-login',
@@ -32,14 +23,17 @@ import { BackendService } from '../services/backend.service';
     ReactiveFormsModule,
     InputGroupModule,
     InputGroupAddonModule,
-    ButtonModule
+    ButtonModule,
+    CommonModule,
+    LoadingComponent
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
 export class LoginComponent implements OnInit, OnDestroy{
-  // users$ = this.chatService.users$;
   hidePassword = true;
+  loading: boolean = true;
+  private subscription: Subscription;
 
   loginForm = new FormGroup({
     username: new FormControl('', ),
@@ -49,9 +43,14 @@ export class LoginComponent implements OnInit, OnDestroy{
   constructor(
     private router: Router,
     private authService: AuthService,
-    // private chatService: ChatService,
-    private backendService: BackendService
-    ) { }
+    private backendService: BackendService,
+    private backendInfoService: BackendInfoService
+    ) { 
+      this.subscription = this.backendInfoService.backendUrl$.subscribe(value => {
+        if(value !== "none")
+          this.loading = false;
+      });
+    }
 
   ngOnInit(): void {
     this.backendService.init();
@@ -63,14 +62,6 @@ export class LoginComponent implements OnInit, OnDestroy{
 
   login() {
     var username = this.loginForm.value.username!;
-
-    // if (username.trim()) {
-    //   this.chatService.setCurrentUser(username);
-    //   if (!this.chatService.isUserExists(username)) {
-    //     this.chatService.addUser(username);
-    //   }
-    //   // username = '';
-    // }
 
     const loginData: LoginData = this.loginForm.value as LoginData;
     this.authService.login(loginData).subscribe({
