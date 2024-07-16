@@ -76,7 +76,8 @@ export class HomeComponent implements OnInit, OnDestroy{
         // Handle the case when backendUrl is updated
         console.log('Backend URL updated: ', url, this.initTriggered);
         this.backendService.getAllZnodesAndChildren(this.zNodes, url);
-        this.backendService.getAllNodesChildren(this.allNodesChildren, url);
+        this.backendService.getAllNodesChildrenInfo(this.allNodesChildren, url);
+        // this.backendService.getAllNodesChildren(this.allNodesChildren, url);
         this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
 
         // Subscription resets when components change, so we need to refresh subscription

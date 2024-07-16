@@ -16,8 +16,13 @@ public class AuthController {
         this.zooKeeperBL = zooKeeperBL;
     }
     @PostMapping("/login")
-    public ResponseEntity<ServerResponseDTO> Login(@RequestBody UserDTO userDTO) {
-        this.zooKeeperBL.addZNode(userDTO.getUsername());
+    public ResponseEntity<ServerResponseDTO> Login(
+            @RequestBody UserDTO userDTO,
+            @RequestParam(name = "userAdded", required = false, defaultValue = "false") boolean userAdded) {
+
+        System.out.println("User Added: " + userAdded);
+
+        this.zooKeeperBL.addZNode(userDTO.getUsername(), userAdded);
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged in.");
 

@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
 import { LoginData } from '../models/login-data';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BackendInfoService } from './backend-info.service';
 import { Subscription } from 'rxjs';
 
@@ -36,8 +36,9 @@ export class AuthService implements OnDestroy{
     return this.cookieService.get("username") ? true : false;
   }
 
-  login(loginData: LoginData) {
-    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData);
+  login(loginData: LoginData, userAddedParam: boolean = false) {
+    let params = new HttpParams().set('userAdded', userAddedParam);
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData, {params});
   }
 
   deleteCookies() {

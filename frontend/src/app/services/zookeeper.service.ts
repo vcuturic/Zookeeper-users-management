@@ -22,6 +22,10 @@ export class ZookeeperService {
     return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allnodes`);
   }
 
+  getAllNodesChildrenInfo(backEndUrl: string): Observable<any> {
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allnodesinfo`);
+  }
+
   getLiveNodesChildren(backEndUrl: string): Observable<any> {
     return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/livenodes`);
   }

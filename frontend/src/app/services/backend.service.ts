@@ -153,7 +153,35 @@ export class BackendService {
             const newNode: ZNode = {
               name: res[i],
               children: [],
-              online: false
+              online: false,
+              type: Constants.ZNODE_TYPE_INITIAL
+            }
+            allNodesChildren.push(newNode);
+          }
+        }
+      },
+      error: (err: any) => {
+        this.checkBackendAvailability(0);
+      }
+    });
+  }
+
+  getAllNodesChildrenInfo(allNodesChildren: ZNode[], backendUrl?: string) {
+    var backendInitialized = false;
+
+    if (backendUrl) {
+      backendInitialized = true;
+    } 
+
+    this.zooKeeperService.getAllNodesChildrenInfo(backendInitialized ? backendUrl! : this.availableBackEndUrl!).subscribe({
+      next: (res: any) => {
+        if(res) {        
+          for (let i = 0; i < res.length; i++) {
+            const newNode: ZNode = {
+              name: res[i].name,
+              children: [],
+              online: false,
+              type: res[i].type
             }
             allNodesChildren.push(newNode);
           }

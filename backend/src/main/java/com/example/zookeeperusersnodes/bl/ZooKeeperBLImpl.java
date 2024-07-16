@@ -1,5 +1,6 @@
 package com.example.zookeeperusersnodes.bl;
 import com.example.zookeeperusersnodes.constants.NodePaths;
+import com.example.zookeeperusersnodes.constants.NodeTypes;
 import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
 import com.example.zookeeperusersnodes.zookeeper.ZooKeeperInitializer;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.zookeeperusersnodes.constants.NodePaths.ELECTION_PATH;
 import static com.example.zookeeperusersnodes.constants.NodePaths.MESSAGING_PATH;
 
 @Service
@@ -35,6 +37,41 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
     @Override
     public List<String> getAllNodesChildren() {
         return ClusterInfo.getClusterInfo().getAllNodes();
+    }
+
+    @Override
+    public List<NodeDTO> getAllNodesChildrenInfo() {
+        try {
+            List<String> children = zooKeeper.getChildren(NodePaths.ALL_NODES_PATH, false);
+
+//            ELECTION_PATH Nodes have data, and they only are server nodes
+            List<String> serverNodes = zooKeeper.getChildren(NodePaths.ELECTION_PATH, false);
+
+            List<NodeDTO> childrenDTO = new ArrayList<>();
+
+            for (String serverNode : serverNodes) {
+                String serverNodePath = ELECTION_PATH + "/" + serverNode;
+                byte[] data = zooKeeper.getData(serverNodePath, false, null);
+
+                if (data != null && data.length > 0) {
+                    childrenDTO.add(new NodeDTO(new String(data), NodeTypes.ZNODE_TYPE_SERVER, false));
+                }
+            }
+
+            for (String child : children) {
+
+                if(!containsName(childrenDTO, child)) {
+                    childrenDTO.add(new NodeDTO(child, NodeTypes.ZNODE_TYPE_USER, false));
+                }
+            }
+
+            return childrenDTO;
+        }
+        catch (KeeperException | InterruptedException e) {
+//            throw new RuntimeException(e);
+        }
+
+        return null;
     }
 
     @Override
@@ -65,6 +102,28 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
                 zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             else if(zooKeeper.exists(NodePaths.LIVE_NODES_PATH + newNodeName, false) == null) {
+                // THEN, the node is back online
+                zooKeeper.create(NodePaths.LIVE_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            }
+        }
+        catch (KeeperException | InterruptedException e) {
+//            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void addZNode(String username, boolean userAdded) {
+        String newNodeName = "/" + username;
+
+        try {
+            if(zooKeeper.exists(NodePaths.ALL_NODES_PATH + newNodeName, false) == null) {
+                // EPHEMERAL
+                if(!userAdded)
+                    zooKeeper.create(NodePaths.LIVE_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                // PERSISTENT
+                zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+            else if(zooKeeper.exists(NodePaths.LIVE_NODES_PATH + newNodeName, false) == null && !userAdded) {
                 // THEN, the node is back online
                 zooKeeper.create(NodePaths.LIVE_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             }
@@ -136,5 +195,9 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
         // Node checked its children, populated the list if there were any
         NodeDTO newNode = new NodeDTO(nodeName, null, newNodeChildren);
         parentsChildren.add(newNode);
+    }
+
+    public static boolean containsName(List<NodeDTO> list, String name) {
+        return list.stream().anyMatch(dto -> dto.name.equals(name));
     }
 }

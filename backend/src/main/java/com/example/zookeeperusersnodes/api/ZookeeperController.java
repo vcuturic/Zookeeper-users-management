@@ -29,6 +29,11 @@ public class ZookeeperController {
         return this.zooKeeperBL.getAllNodesChildren();
     }
 
+    @GetMapping("/allnodesinfo")
+    public List<NodeDTO> getAllNodesChildrenInfo() {
+        return this.zooKeeperBL.getAllNodesChildrenInfo();
+    }
+
     @GetMapping("/livenodes")
     public List<String> getLiveNodesChildren() {
         return this.zooKeeperBL.getLiveNodesChildren();

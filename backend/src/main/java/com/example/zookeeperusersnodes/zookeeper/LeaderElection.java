@@ -51,8 +51,13 @@ public class LeaderElection implements Watcher {
                 if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
                     try {
                         List<String> children = zooKeeper.getChildren(ALL_NODES_PATH, null);
+                        String newChild = findDifferentElement(children, ClusterInfo.getClusterInfo().getAllNodes());
+
                         ClusterInfo.getClusterInfo().getAllNodes().clear();
                         ClusterInfo.getClusterInfo().getAllNodes().addAll(children);
+
+                        this.notificationService.nodeConnectedNotification(newChild);
+                        this.notificationService.nodeDeletedNotification(newChild);
 
                     }
                     catch (KeeperException | InterruptedException e) {
@@ -234,5 +239,17 @@ public class LeaderElection implements Watcher {
         }
 
         return address != null ? address + ":" + serverPort : null;
+    }
+
+    public static String findDifferentElement(List<String> list1, List<String> list2) {
+        List<String> copyOfList1 = new ArrayList<>(list1);
+
+        copyOfList1.removeAll(list2);
+
+        if (copyOfList1.size() == 1) {
+            return copyOfList1.getFirst();
+        } else {
+            throw new IllegalStateException("There is no unique different element.");
+        }
     }
 }
