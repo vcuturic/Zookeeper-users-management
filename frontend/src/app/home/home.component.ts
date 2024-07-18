@@ -62,7 +62,11 @@ export class HomeComponent implements OnInit, OnDestroy{
         if(value) {
           this.loading = true;
           this.allNodesChildren = [];
-          this.zNodes = [];
+          this.zNodes = []; // mozda je ovaj problematican
+          this.topicSubscription?.unsubscribe(); // THIS MUST BE CHECKED
+          this.backendService.destruct(); // THIS MUST BE CHECKED
+          // DONT WANT THE SUBSCRIPTION REMOVED IF THERE IS NONE
+          // VERY POSSIBLE THE REASON AFTER LOGIN MESSAGES AREN'T COMING
         }
       });
     }
@@ -102,6 +106,7 @@ export class HomeComponent implements OnInit, OnDestroy{
   private handleBackendMessages(jsonString: string) {
     if(jsonString) {
       const msg: MessageStructure = JSON.parse(jsonString);
+      console.log(msg);
 
       if(msg.operation === Constants.OPERATION_CONNECT) {
         if(!this.allNodesChildren.find(obj => obj.name === msg.zNode.name)) {
@@ -143,5 +148,9 @@ export class HomeComponent implements OnInit, OnDestroy{
         console.error(err);
       }
     });
+  }
+
+  onZNodesChange(updatedZNodes: ZNode[]) {
+    this.allNodesChildren = updatedZNodes;
   }
 }

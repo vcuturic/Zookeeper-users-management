@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { interval, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BackendInfoService } from './backend-info.service';
 
 @Injectable({
@@ -50,5 +50,10 @@ export class UserService {
   logout() {
     this.heartbeatSubscription.unsubscribe();
     return this.http.post<any>(`${this.backendUrl}/${this.userApiUrl}/logout`, null, { withCredentials: true });
+  }
+
+  removeUser(username: string) {
+    let params = new HttpParams().set('userRemoved', username);
+    return this.http.post<any>(`${this.backendUrl}/${this.userApiUrl}/removeUser`, null, {params})
   }
 }

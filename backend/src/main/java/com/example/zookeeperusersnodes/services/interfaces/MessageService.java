@@ -1,4 +1,4 @@
-package com.example.zookeeperusersnodes.realtime.interfaces;
+package com.example.zookeeperusersnodes.services.interfaces;
 
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 

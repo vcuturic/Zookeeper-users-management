@@ -1,6 +1,11 @@
 package com.example.zookeeperusersnodes.zookeeper;
+import com.example.zookeeperusersnodes.constants.NodeOperations;
 import com.example.zookeeperusersnodes.constants.NodePaths;
-import com.example.zookeeperusersnodes.realtime.interfaces.NotificationService;
+import com.example.zookeeperusersnodes.constants.NodeTypes;
+import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.services.interfaces.NotificationService;
+import com.example.zookeeperusersnodes.services.interfaces.WebSocketService;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.zookeeper.*;
@@ -13,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class LeaderElection implements Watcher {
@@ -26,7 +32,11 @@ public class LeaderElection implements Watcher {
     private final ZooKeeper zooKeeper;
     private final NotificationService notificationService;
     @Autowired
+    private ZooKeeperService zooKeeperService;
+    @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private WebSocketService webSocketService;
 
     public LeaderElection(ZooKeeperInitializer zooKeeperInitializer, NotificationService notificationService) {
         this.zooKeeper = zooKeeperInitializer.getZooKeeperInstance();
@@ -51,14 +61,24 @@ public class LeaderElection implements Watcher {
                 if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
                     try {
                         List<String> children = zooKeeper.getChildren(ALL_NODES_PATH, null);
-                        String newChild = findDifferentElement(children, ClusterInfo.getClusterInfo().getAllNodes());
+                        String newChild;
 
-                        ClusterInfo.getClusterInfo().getAllNodes().clear();
-                        ClusterInfo.getClusterInfo().getAllNodes().addAll(children);
+                        if(children.size() > ClusterInfo.getClusterInfo().getAllNodes().size()) {
+                            // Addition occurred
+                            newChild = findDifferentElement(children, ClusterInfo.getClusterInfo().getAllNodes());
+                            int nodeType = getNodeType(newChild);
 
-                        this.notificationService.nodeConnectedNotification(newChild);
-                        this.notificationService.nodeDeletedNotification(newChild);
+                            ClusterInfo.getClusterInfo().getAllNodes().add(newChild);
 
+                            CompletableFuture.runAsync(() -> this.notificationService.nodeConnectedNotification(newChild, nodeType))
+                                    .thenRunAsync(() -> this.notificationService.nodeDeletedNotification(newChild, nodeType));
+
+                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT));
+                        }
+                        else {
+                            ClusterInfo.getClusterInfo().getAllNodes().clear();
+                            ClusterInfo.getClusterInfo().getAllNodes().addAll(children);
+                        }
                     }
                     catch (KeeperException | InterruptedException e) {
                         throw new RuntimeException(e);
@@ -82,7 +102,28 @@ public class LeaderElection implements Watcher {
             }
         }
     }
+    public int getNodeType(String nodeName) {
+        try {
+            List<String> serverNodes = zooKeeper.getChildren(NodePaths.ELECTION_PATH, false);
 
+            for (String serverNode : serverNodes) {
+                String serverNodePath = ELECTION_PATH + "/" + serverNode;
+                byte[] data = zooKeeper.getData(serverNodePath, false, null);
+
+                if (data != null && data.length > 0) {
+                    String serverNodeAddress = new String(data);
+
+                    if(nodeName.equals(serverNodeAddress))
+                        return NodeTypes.ZNODE_TYPE_SERVER;
+                }
+            }
+
+            return NodeTypes.ZNODE_TYPE_USER;
+        }
+        catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void getLatestClusterInfo() {
         try {
             // UPDATE all nodes nad live nodes.
@@ -148,6 +189,8 @@ public class LeaderElection implements Watcher {
 
         // Compete for leadership
         currentZNode = zooKeeper.create(ELECTION_PATH + "/node", getServerInfo().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+
+        this.zooKeeperService.setCurrentZNode(currentZNode);
     }
 
     @PreDestroy
@@ -183,9 +226,13 @@ public class LeaderElection implements Watcher {
 
             if(ClusterInfo.getClusterInfo().getAllNodes().contains(addedNode)) {
                 this.notificationService.nodeReconnectedNotification(addedNode);
+                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
             }
             else {
                 this.notificationService.nodeConnectedNotification(addedNode);
+                // TODO Nekako optimizovati ovaj broadcast, skup je, ruzno je
+                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_CONNECT));
+                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
             }
 
             ClusterInfo.getClusterInfo().getLiveNodes().clear();
@@ -199,6 +246,7 @@ public class LeaderElection implements Watcher {
             String deletedNode = iterator.hasNext() ? iterator.next() : null;
 
             this.notificationService.nodeDeletedNotification(deletedNode);
+            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(deletedNode, getNodeType(deletedNode), NodeOperations.OPERATION_DELETE));
 
             ClusterInfo.getClusterInfo().setLiveNodes(children);
         }
@@ -242,6 +290,10 @@ public class LeaderElection implements Watcher {
     }
 
     public static String findDifferentElement(List<String> list1, List<String> list2) {
+        // TODO There is some bug here, when an user is added it says no unique 1 user
+        // TODO we cant add more, just 1 at a time
+        // KADA SE OBRISE USER, NE AZURIRA SE ClusterInfo!!
+
         List<String> copyOfList1 = new ArrayList<>(list1);
 
         copyOfList1.removeAll(list2);

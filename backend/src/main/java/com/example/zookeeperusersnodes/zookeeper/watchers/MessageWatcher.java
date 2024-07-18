@@ -1,6 +1,6 @@
 package com.example.zookeeperusersnodes.zookeeper.watchers;
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
-import com.example.zookeeperusersnodes.realtime.interfaces.MessageService;
+import com.example.zookeeperusersnodes.services.interfaces.MessageService;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -33,13 +33,13 @@ public class MessageWatcher implements Watcher {
                 String message = new String(data);
 
                 System.out.println(userPath + " New MESSAGE: " + message);
-                // TODO Send message to message window. (websocket)
+
                 String[] parts = userPath.split("/");
                 String username = parts[parts.length - 1];
                 this.messageService.sendMessage(new UserMessageDTO(username, message));
             }
             catch (KeeperException | InterruptedException e) {
-//                    throw new RuntimeException(e);
+                    throw new RuntimeException(e);
             }
         }
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 //
 import { RxStompService } from './rx-stomp.service';
 import { environment } from '../../environments/environment';
@@ -15,7 +15,7 @@ import { ZookeeperService } from './zookeeper.service';
 @Injectable({
   providedIn: 'root'
 })
-export class BackendService {
+export class BackendService implements OnDestroy {
   availableBackEndUrl?: string;
   lastAttemptedWebSocketUrl: string = environment.websocketUrl1;
   connectedToBackend: boolean = false;
@@ -41,6 +41,10 @@ export class BackendService {
     private backendInfoService: BackendInfoService,
     private zooKeeperService: ZookeeperService,
   ) { }
+
+  ngOnDestroy(): void {
+    this.destruct();
+  }
 
   setConnectingStatus(newValue: boolean) {
     this.connectingToBackendSubject.next(newValue);
@@ -104,7 +108,7 @@ export class BackendService {
     if(!this.connectedToBackend) {
       const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
       console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       this.configurationService.checkForAvailableBackendUrl(backendUrls[currentBackendIndex]).subscribe({
         next: (res: any) => {
@@ -133,6 +137,7 @@ export class BackendService {
   }
 
   storeBackendMessages(jsonString: string) {
+    console.log("storeBackendMessages(): " + jsonString);
     this.updateMessagesFromBackendSubject.next(jsonString);
   }
 

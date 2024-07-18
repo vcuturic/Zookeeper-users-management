@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2, ViewChild } from '@angular/core';
 import { ZNode } from '../../models/znode';
 import { ButtonModule } from 'primeng/button';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-nodes-visual',
@@ -35,6 +36,7 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 })
 export class NodesVisualComponent implements OnInit {
   @Input({required: true}) zNodes!: ZNode[]; 
+  @Output() zNodesChange = new EventEmitter<ZNode[]>();
 
   items: MenuItem[];
   itemsShown: boolean = false;
@@ -49,7 +51,8 @@ export class NodesVisualComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private userService: UserService
   ) {
     this.items = [
       {
@@ -69,14 +72,10 @@ export class NodesVisualComponent implements OnInit {
 
   ngOnInit(): void {
     this.itemsShown = true;
-  }
-  
-  
+  }  
 
   addUser() {
     const loginData: LoginData = this.addUserForm.value as LoginData;
-    
-    console.log(loginData);
 
     this.authService.login(loginData, true).subscribe({
       next: (res: any) => {
@@ -92,8 +91,18 @@ export class NodesVisualComponent implements OnInit {
   }
 
   removeUser(zNode: ZNode) {
-    // TODO, nmg vishe hahahah :)
-    console.log("removeUser()");
+      this.userService.removeUser(zNode.name).subscribe({
+      next: (res: any) => {
+        if(res) {
+          console.log(res);
+          this.zNodes = this.zNodes.filter(znode => znode.name !== zNode.name);
+          this.zNodesChange.emit(this.zNodes);
+        }
+      },
+      error: (err: any) => {
+        console.warn(err);
+      }
+    })
   }
 
   showFields() {
@@ -101,7 +110,7 @@ export class NodesVisualComponent implements OnInit {
   }
 
   handleZNodeClick(zNode: ZNode, event: MouseEvent) {
-    if(zNode.type == Constants.ZNODE_TYPE_USER) {
+    if(zNode.type == Constants.ZNODE_TYPE_USER && zNode.name !== this.authService.getUsername()) {
       this.populateMenu(zNode);
       this.closeMenus(zNode);
       

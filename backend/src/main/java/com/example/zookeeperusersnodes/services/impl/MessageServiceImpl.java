@@ -1,7 +1,7 @@
-package com.example.zookeeperusersnodes.realtime.impl;
+package com.example.zookeeperusersnodes.services.impl;
 
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
-import com.example.zookeeperusersnodes.realtime.interfaces.MessageService;
+import com.example.zookeeperusersnodes.services.interfaces.MessageService;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 

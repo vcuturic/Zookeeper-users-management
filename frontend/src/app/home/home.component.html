@@ -22,11 +22,11 @@
 
 <div class="grid grid-nogutter">
     <div class="col-fixed bg-dark" style="height: 100vh; width: 20%;">
-        <app-node-tree [zNodes]="zNodes" ></app-node-tree>
+        <app-node-tree [zNodes]="zNodes"></app-node-tree>
     </div>
     <div class="col">
         <div class="text-center">
-            <app-nodes-visual [zNodes]="allNodesChildren"></app-nodes-visual>
+            <app-nodes-visual [zNodes]="allNodesChildren" (zNodesChange)="onZNodesChange($event)"></app-nodes-visual>
         </div>
         <div class="main-chat-container">
             <app-user-list></app-user-list>

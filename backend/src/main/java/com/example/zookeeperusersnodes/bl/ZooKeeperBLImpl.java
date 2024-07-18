@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.zookeeperusersnodes.constants.NodePaths.ELECTION_PATH;
-import static com.example.zookeeperusersnodes.constants.NodePaths.MESSAGING_PATH;
 
 @Service
 public class ZooKeeperBLImpl implements ZooKeeperBL {
@@ -117,11 +116,11 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
 
         try {
             if(zooKeeper.exists(NodePaths.ALL_NODES_PATH + newNodeName, false) == null) {
+                // PERSISTENT
+                zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 // EPHEMERAL
                 if(!userAdded)
                     zooKeeper.create(NodePaths.LIVE_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-                // PERSISTENT
-                zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             else if(zooKeeper.exists(NodePaths.LIVE_NODES_PATH + newNodeName, false) == null && !userAdded) {
                 // THEN, the node is back online
@@ -148,16 +147,32 @@ public class ZooKeeperBLImpl implements ZooKeeperBL {
     }
 
     @Override
+    public void removeZNode(String username) {
+        String newNodeName = "/" + username;
+
+        try {
+            if(zooKeeper.exists(NodePaths.ALL_NODES_PATH + newNodeName, false) != null) {
+                zooKeeper.delete(NodePaths.ALL_NODES_PATH + newNodeName, -1);
+            }
+
+            this.removeZNodeFromLiveNodes(username);
+        }
+        catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addMessageZNode(String username, String message) {
         String newNodeName = "/" + username;
 
         try {
             // If user already sent some messages we create only its children with new messages
-            if(zooKeeper.exists(MESSAGING_PATH + newNodeName, false) == null) {
-                zooKeeper.create(NodePaths.MESSAGING_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            if(zooKeeper.exists(NodePaths.ALL_NODES_PATH + newNodeName, false) == null) {
+                zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
-            zooKeeper.create(NodePaths.MESSAGING_PATH + newNodeName + "/message-", message.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName + "/message-", message.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
         }
         catch (KeeperException | InterruptedException e) {
             throw new RuntimeException(e);
