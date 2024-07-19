@@ -39,36 +39,28 @@ export class HomeComponent implements OnInit, OnDestroy{
   allNodesChildren: ZNode[] = [];
   private topicSubscription?: Subscription;
   private connectingToBackendSubscription: Subscription;
-  private subscription: Subscription;
+  private subscription?: Subscription;
   private updateMessagesFromBackend: string = ''
   initTriggered: boolean = false;
   loading: boolean = true;
 
   constructor(
-    private backendService: BackendService,
-    private backendInfoService: BackendInfoService,
     private rxStompService: RxStompService,
+    private backendInfoService: BackendInfoService,
+    private backendService: BackendService,
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
     ) {
-      // if some backend instance failed durning login page, we need to read it and fix it
-      this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
-        this.updateMessagesFromBackend = value;
-        this.handleBackendMessages(value);
-      });
-
-      this.connectingToBackendSubscription = this.backendService.connectingToBackend$.subscribe(value => {
-        if(value) {
-          this.loading = true;
-          this.allNodesChildren = [];
-          this.zNodes = []; // mozda je ovaj problematican
-          this.topicSubscription?.unsubscribe(); // THIS MUST BE CHECKED
-          this.backendService.destruct(); // THIS MUST BE CHECKED
-          // DONT WANT THE SUBSCRIPTION REMOVED IF THERE IS NONE
-          // VERY POSSIBLE THE REASON AFTER LOGIN MESSAGES AREN'T COMING
-        }
-      });
+        this.connectingToBackendSubscription = this.backendService.connectingToBackend$.subscribe(value => {
+          if(value) {
+            this.loading = true;
+            this.allNodesChildren = [];
+            this.zNodes = []; 
+            // this.topicSubscription?.unsubscribe(); 
+            // this.backendService.destruct(); 
+          }
+        });
     }
 
   ngOnInit(): void {
@@ -79,28 +71,48 @@ export class HomeComponent implements OnInit, OnDestroy{
       } else {
         // Handle the case when backendUrl is updated
         console.log('Backend URL updated: ', url, this.initTriggered);
+
+        this.userService.sendHeartbeat();
+
         this.backendService.getAllZnodesAndChildren(this.zNodes, url);
         this.backendService.getAllNodesChildrenInfo(this.allNodesChildren, url);
-        // this.backendService.getAllNodesChildren(this.allNodesChildren, url);
         this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
 
-        // Subscription resets when components change, so we need to refresh subscription
-        if(!this.initTriggered) {
+        if(this.initTriggered) {
           this.topicSubscription = this.rxStompService
             .watch(Constants.DESTINATION_ROUTE)
             .subscribe((message: Message) => {
               this.handleBackendMessages(message.body);
+          });     
+        } 
+        else {
+          this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
+            this.updateMessagesFromBackend = value;
+            this.handleBackendMessages(value);
           });
         }
 
-        this.initTriggered = false;
         this.loading = false;
       }
     });  
   }
 
+  unsubscribeFromBackendMessages() {
+    if(this.initTriggered) {
+      // After Login
+      this.topicSubscription?.unsubscribe();
+    }
+    else {
+      // No Login
+      if(this.subscription)
+        this.subscription.unsubscribe();
+    }
+
+    this.backendService.destruct(); // Must, because login.component always initializes new backend
+  }
+
   ngOnDestroy(): void {
-    this.backendService.destruct();
+    this.unsubscribeFromBackendMessages();
   }
 
   private handleBackendMessages(jsonString: string) {
@@ -108,44 +120,63 @@ export class HomeComponent implements OnInit, OnDestroy{
       const msg: MessageStructure = JSON.parse(jsonString);
       console.log(msg);
 
-      if(msg.operation === Constants.OPERATION_CONNECT) {
-        if(!this.allNodesChildren.find(obj => obj.name === msg.zNode.name)) {
-          this.allNodesChildren.push(msg.zNode);
+      if(msg.zNode.name === this.authService.getUsername()) {
+        if(msg.operation === Constants.OPERATION_DISCONNECT) {
+          msg.operation = Constants.OPERATION_ERROR;
+          console.log("ERROR happend: " + msg.operation);
+          this.backendService.getNextMessage();
         }
       }
-      else {
+
+      if(msg.operation === Constants.OPERATION_CONNECT_OFFLINE) {
+          msg.zNode.online = false;
+          this.allNodesChildren.push(msg.zNode);
+      }
+      if(msg.operation === Constants.OPERATION_CONNECT_ONLINE) {
+        msg.zNode.online = true;
+        this.allNodesChildren.push(msg.zNode);
+      }
+      if(msg.operation === Constants.OPERATION_RECONNECT) {
         const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
 
-        if(msg.operation === Constants.OPERATION_DELETE) {
-          if(foundIndex !== -1) {
-            this.allNodesChildren[foundIndex].online = false;
-
-            if(this.allNodesChildren.every(zNode => zNode.online == false)) {
-              // last node disconnected - remove all_nodes
-              this.allNodesChildren = [];
-            }
-          }
+        if(foundIndex !== -1) {
+          this.allNodesChildren[foundIndex].online = true;
         }
-        else if(msg.operation === Constants.OPERATION_RECONNECT) {
-          if(foundIndex !== -1) {
-            this.allNodesChildren[foundIndex].online = true;
-          }
+      }
+      if(msg.operation === Constants.OPERATION_DISCONNECT) {
+        const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+
+        if(foundIndex !== -1) {
+          this.allNodesChildren[foundIndex].online = false;
+        }
+      }
+      if(msg.operation === Constants.OPERATION_DELETE) {
+        const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+
+        if(foundIndex !== -1) {
+          this.allNodesChildren = this.allNodesChildren.filter(znode => znode.name !== msg.zNode.name);
         }
       }
     }
   }
 
   logout() {
-    this.userService.logout().subscribe({
+    this.authService.logout().subscribe({
       next: (res: any) => { 
         if(res) {
           console.log(res);
+          this.userService.stopHeartbeat();
+          // this.backendService.clearUpMessagesFromUser();
+          this.unsubscribeFromBackendMessages();
+          // this.backendService.destruct();
           this.authService.deleteCookies();
-          this.router.navigate(['/login']);
         }
       },
       error: (err: any) => {
         console.error(err);
+      },
+      complete: () => {
+        this.router.navigate(['/login']);
       }
     });
   }

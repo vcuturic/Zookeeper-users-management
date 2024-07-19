@@ -50,6 +50,10 @@ export class BackendService implements OnDestroy {
     this.connectingToBackendSubject.next(newValue);
   }
 
+  getNextMessage() {
+    console.log(this.connectingToBackendSubject.getValue());
+  }
+
   init() {
     this.rxStompService.onConnecting().subscribe((serverUrl: string) => {
       this.lastAttemptedWebSocketUrl = serverUrl;
@@ -67,36 +71,38 @@ export class BackendService implements OnDestroy {
       if(state == ConnectionState.CLOSED)
         this.connectedToBackend = false;
 
-      if(this.lastAttemptedWebSocketUrl && (state == ConnectionState.CLOSED || state == ConnectionState.OPEN)) {
-        const portNumber = this.lastAttemptedWebSocketUrl.split(":")[2].split("/")[0];
-        const processedZNode = this.allNodesChildren.find(zNode => zNode.name.includes(portNumber));
+      // if(this.lastAttemptedWebSocketUrl && (state == ConnectionState.CLOSED || state == ConnectionState.OPEN)) {
+      //   const portNumber = this.lastAttemptedWebSocketUrl.split(":")[2].split("/")[0];
+      //   const processedZNode = this.allNodesChildren.find(zNode => zNode.name.includes(portNumber));
 
-        if(processedZNode) {
-          const newMessage: MessageStructure = {
-            operation: "",
-            zNode: processedZNode
-          }
+        // if(processedZNode) {
+        //   const newMessage: MessageStructure = {
+        //     operation: "",
+        //     zNode: processedZNode
+        //   }
 
-          if(state == ConnectionState.CLOSED) {
-            newMessage.operation = Constants.OPERATION_DELETE;
-          }
-          else if(state == ConnectionState.OPEN) {
-            if(this.allNodesChildren.length == 0)
-              newMessage.operation = Constants.OPERATION_CONNECT;
-            else 
-              newMessage.operation = Constants.OPERATION_RECONNECT;
-          }
+        //   if(state == ConnectionState.CLOSED) {
+        //     newMessage.operation = Constants.OPERATION_DELETE;
+        //   }
+        //   else if(state == ConnectionState.OPEN) {
+        //     if(this.allNodesChildren.length == 0)
+        //       newMessage.operation = Constants.OPERATION_CONNECT;
+        //     else 
+        //       newMessage.operation = Constants.OPERATION_RECONNECT;
+        //   }
 
-          this.storeBackendMessages(JSON.stringify(newMessage));
-        }
-      }
+        //   this.storeBackendMessages(JSON.stringify(newMessage));
+        // }
+      // }
     });
 
-    this.topicSubscription = this.rxStompService
-      .watch(Constants.DESTINATION_ROUTE)
-      .subscribe((message: Message) => {
-        this.storeBackendMessages(message.body);
-    });
+    if(!this.topicSubscription) {
+      this.topicSubscription = this.rxStompService
+        .watch(Constants.DESTINATION_ROUTE)
+        .subscribe((message: Message) => {
+          this.storeBackendMessages(message.body);
+      });
+    }
   }
 
   destruct() {
@@ -139,6 +145,10 @@ export class BackendService implements OnDestroy {
   storeBackendMessages(jsonString: string) {
     console.log("storeBackendMessages(): " + jsonString);
     this.updateMessagesFromBackendSubject.next(jsonString);
+  }
+
+  clearUpMessagesFromUser() {
+    this.updateMessagesFromBackendSubject.next("");
   }
 
   getAllNodesChildren(allNodesChildren: ZNode[], backendUrl?: string) {

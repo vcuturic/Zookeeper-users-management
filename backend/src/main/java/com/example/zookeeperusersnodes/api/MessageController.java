@@ -1,8 +1,8 @@
 package com.example.zookeeperusersnodes.api;
-
-import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
+import com.example.zookeeperusersnodes.annotation.LeaderOnly;
 import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,17 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/message")
 public class MessageController {
-    private final ZooKeeperBL zooKeeperBL;
+    private final ZooKeeperService zooKeeperService;
 
-    public MessageController(ZooKeeperBL zooKeeperBL) {
-        this.zooKeeperBL = zooKeeperBL;
+    public MessageController(ZooKeeperService zooKeeperService) {
+        this.zooKeeperService = zooKeeperService;
     }
+
+    @LeaderOnly
     @PostMapping("/receive")
     public ResponseEntity<ServerResponseDTO> receiveMessage(@RequestBody UserMessageDTO userMessageDTO) {
         System.out.println(userMessageDTO.getUsername() + " " + userMessageDTO.getMessage());
 
-        // TODO Samo dodati node /message/pero-1 npr
-        this.zooKeeperBL.addMessageZNode(userMessageDTO.getUsername(), userMessageDTO.getMessage());
+        this.zooKeeperService.addMessageZNode(userMessageDTO.getUsername(), userMessageDTO.getMessage());
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully received message.");
 

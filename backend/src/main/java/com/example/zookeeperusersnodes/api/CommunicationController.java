@@ -31,47 +31,10 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("comm")
 public class CommunicationController {
-
-    private NotificationService notificationService;
-
-    ObjectMapper objectMapper = new ObjectMapper();
-
-    @Value("${ws.instances}")
-    private String[] webSocketInstances;
-
-    public CommunicationController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
-
-
     // This route is used when No-Leader nodes want to update (for ex. new no-leader node started) -
     // It needs to be up-to-date.
     @GetMapping("/clusterInfo")
     public ClusterInfo getClusterInfo() {
         return ClusterInfo.getClusterInfo();
-    }
-
-    @GetMapping("/create-client")
-    public void sendMessage() {
-        String serverUri = "ws://localhost:9090/ws-endpoint2"; // Replace with receiver!!
-        StandardWebSocketClient webSocketClient = new StandardWebSocketClient();
-        try {
-            WebSocketSession webSocketSession = webSocketClient.execute(
-                    new WebSocketHandler(this.notificationService), serverUri).get();
-
-            NodeDTO nodeDTO = new NodeDTO("admin2", 2, false);
-            String jsonMessage = objectMapper.writeValueAsString(nodeDTO);
-            webSocketSession.sendMessage(new TextMessage(jsonMessage));
-
-            // Simulate waiting for responses
-            CountDownLatch latch = new CountDownLatch(1);
-            latch.await(10, TimeUnit.SECONDS);
-
-            // Close the WebSocket session
-            webSocketSession.close();
-        }
-        catch (InterruptedException | ExecutionException | IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

@@ -3,6 +3,7 @@ import { interval, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BackendInfoService } from './backend-info.service';
+import { LoginData } from '../models/login-data';
 
 @Injectable({
   providedIn: 'root'
@@ -34,22 +35,20 @@ export class UserService {
     });
   }
 
-  private sendHeartbeat() {
+  sendHeartbeat() {
     this.http.post(`${this.backendUrl}/${this.userApiUrl}/heartbeat`, null, {withCredentials: true}).subscribe();
+  }
+
+  stopHeartbeat() {
+    this.heartbeatSubscription.unsubscribe();
   }
 
   ngOnDestroy() {
     this.heartbeatSubscription.unsubscribe();
-    this.sendUserLeft();
   }
 
-  private sendUserLeft() {
-    navigator.sendBeacon(`${this.backendUrl}/${this.userApiUrl}/user-left`, JSON.stringify({ username: this.username, password: "" }));
-  }
-
-  logout() {
-    this.heartbeatSubscription.unsubscribe();
-    return this.http.post<any>(`${this.backendUrl}/${this.userApiUrl}/logout`, null, { withCredentials: true });
+  addUser(userData: LoginData) {
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.userApiUrl}/add`, userData);
   }
 
   removeUser(username: string) {

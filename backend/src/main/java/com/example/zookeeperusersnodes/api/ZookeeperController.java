@@ -1,6 +1,6 @@
 package com.example.zookeeperusersnodes.api;
-import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,31 +12,31 @@ import java.util.List;
 @RestController
 @RequestMapping("/zookeeper")
 public class ZookeeperController {
-    private final ZooKeeperBL zooKeeperBL;
+    private final ZooKeeperService zooKeeperService;
     @Autowired
     private RestTemplate restTemplate;
 
-    public ZookeeperController(ZooKeeperBL zooKeeperBL) {
-        this.zooKeeperBL = zooKeeperBL;
+    public ZookeeperController(ZooKeeperService zooKeeperService) {
+        this.zooKeeperService = zooKeeperService;
     }
     @GetMapping("/servernodes")
     public List<NodeDTO> getZookeeperServerNodes() {
-        return this.zooKeeperBL.getZookeeperServerNodes();
+        return this.zooKeeperService.getZookeeperServerNodes();
     }
 
     @GetMapping("/allnodes")
     public List<String> getAllNodesChildren() {
-        return this.zooKeeperBL.getAllNodesChildren();
+        return this.zooKeeperService.getAllNodesChildren();
     }
 
     @GetMapping("/allnodesinfo")
     public List<NodeDTO> getAllNodesChildrenInfo() {
-        return this.zooKeeperBL.getAllNodesChildrenInfo();
+        return this.zooKeeperService.getAllNodesChildrenInfo();
     }
 
     @GetMapping("/livenodes")
     public List<String> getLiveNodesChildren() {
-        return this.zooKeeperBL.getLiveNodesChildren();
+        return this.zooKeeperService.getLiveNodesChildren();
     }
 
     @GetMapping("/availability")
@@ -57,8 +57,8 @@ public class ZookeeperController {
     public String fetchData() {
         // Here we need zookeeper instance to get the first instance of /election
         // for that is the leader
-        String leaderName = this.zooKeeperBL.getLeaderInfo();
-        String leaderAddress = this.zooKeeperBL.getLeaderAddress();
+        String leaderName = this.zooKeeperService.getLeaderInfo();
+        String leaderAddress = this.zooKeeperService.getLeaderAddress();
         // Works!
         System.out.println("Communication: " + leaderName);
         System.out.println("Communication: " + leaderAddress);

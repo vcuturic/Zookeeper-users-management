@@ -77,7 +77,7 @@ export class NodesVisualComponent implements OnInit {
   addUser() {
     const loginData: LoginData = this.addUserForm.value as LoginData;
 
-    this.authService.login(loginData, true).subscribe({
+    this.userService.addUser(loginData).subscribe({
       next: (res: any) => {
         if(res) {
           console.log(res);

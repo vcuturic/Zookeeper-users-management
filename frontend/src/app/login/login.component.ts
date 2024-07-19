@@ -69,14 +69,17 @@ export class LoginComponent implements OnInit, OnDestroy{
       next: (res: any) => {
         if(res) {
           console.log(res);
+          // TODO Nekako se sve izdesava pa onda tek ovo
         }
       },
       error: (err: any) => {
         console.error(err);
+      },
+      complete: () => {
+        this.router.navigate(['']);
       }
       
     })
     this.authService.addUserToList(username);
-    this.router.navigate(['']);
   }
 }

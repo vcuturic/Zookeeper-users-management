@@ -39,18 +39,29 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         NodeDTO nodeDTO = new ObjectMapper().readValue(message.getPayload(), NodeDTO.class);
 
-        if(nodeDTO.status.equals(NodeOperations.OPERATION_CONNECT)) {
-            // Deletion used to set online status to false // TODO
-            CompletableFuture.runAsync(() -> this.notificationService.nodeConnectedNotification(nodeDTO.name, nodeDTO.type))
-                    .thenRunAsync(() -> this.notificationService.nodeDeletedNotification(nodeDTO.name, nodeDTO.type));
+        if(nodeDTO.status.equals(NodeOperations.OPERATION_CONNECT_ONLINE)) {
+            this.notificationService.nodeConnectedOnlineNotification(nodeDTO.name, nodeDTO.type);
+
+            ClusterInfo.getClusterInfo().getAllNodes().add(nodeDTO.name);
+            ClusterInfo.getClusterInfo().getLiveNodes().add(nodeDTO.name);
+        }
+        if(nodeDTO.status.equals(NodeOperations.OPERATION_CONNECT_OFFLINE)) {
+            this.notificationService.nodeConnectedOfflineNotification(nodeDTO.name, nodeDTO.type);
+
             ClusterInfo.getClusterInfo().getAllNodes().add(nodeDTO.name);
         }
         if(nodeDTO.status.equals(NodeOperations.OPERATION_RECONNECT)) {
             this.notificationService.nodeReconnectedNotification(nodeDTO.name, nodeDTO.type);
             ClusterInfo.getClusterInfo().getLiveNodes().add(nodeDTO.name);
         }
+        if(nodeDTO.status.equals(NodeOperations.OPERATION_DISCONNECT)) {
+            this.notificationService.nodeDisconnectedNotification(nodeDTO.name, nodeDTO.type);
+            ClusterInfo.getClusterInfo().getLiveNodes().remove(nodeDTO.name);
+        }
         if(nodeDTO.status.equals(NodeOperations.OPERATION_DELETE)) {
             this.notificationService.nodeDeletedNotification(nodeDTO.name, nodeDTO.type);
+
+            ClusterInfo.getClusterInfo().getAllNodes().remove(nodeDTO.name);
             ClusterInfo.getClusterInfo().getLiveNodes().remove(nodeDTO.name);
         }
     }

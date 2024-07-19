@@ -36,14 +36,17 @@ export class AuthService implements OnDestroy{
     return this.cookieService.get("username") ? true : false;
   }
 
-  login(loginData: LoginData, userAddedParam: boolean = false) {
-    let params = new HttpParams().set('userAdded', userAddedParam);
-    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData, {params});
+  login(loginData: LoginData) {
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData);
   }
 
   deleteCookies() {
     this.cookieService.delete("username");
     this.removeUserFromList(this.username!);
+  }
+
+  logout() {
+    return this.http.post<any>(`${this.backendUrl}/${this.authApiUrl}/logout`, null, { withCredentials: true });
   }
 
   getUsername(): string {

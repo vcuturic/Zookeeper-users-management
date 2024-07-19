@@ -1,7 +1,10 @@
 export const DESTINATION_ROUTE = "/topic/notifications"
 export const OPERATION_DELETE = "delete";
-export const OPERATION_CONNECT = "connected";
+export const OPERATION_CONNECT_OFFLINE = "connected_offline";
+export const OPERATION_CONNECT_ONLINE = "connected_online";
 export const OPERATION_RECONNECT = "reconnected";
+export const OPERATION_DISCONNECT = "disconnected";
+export const OPERATION_ERROR = "ERROR"
 export const ZNODE_TYPE_INITIAL = 0
 export const ZNODE_TYPE_SERVER = 1
 export const ZNODE_TYPE_USER = 2

@@ -1,9 +1,10 @@
 package com.example.zookeeperusersnodes.api;
 
 import com.example.zookeeperusersnodes.annotation.LeaderOnly;
-import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
 import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserDTO;
+import com.example.zookeeperusersnodes.services.interfaces.UserService;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,36 +13,38 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final ZooKeeperBL zooKeeperBL;
+    private final ZooKeeperService zooKeeperService;
+    private final UserService userService;
 
-    public AuthController(ZooKeeperBL zooKeeperBL) {
-        this.zooKeeperBL = zooKeeperBL;
+
+    public AuthController(ZooKeeperService zooKeeperService, UserService userService) {
+        this.zooKeeperService = zooKeeperService;
+        this.userService = userService;
     }
+
     @LeaderOnly
     @PostMapping("/login")
-    public ResponseEntity<ServerResponseDTO> Login(
-            @RequestBody UserDTO userDTO,
-            @RequestParam(name = "userAdded", required = false, defaultValue = "false") boolean userAdded) {
+    public ResponseEntity<ServerResponseDTO> Login(@RequestBody UserDTO userDTO) {
+        this.zooKeeperService.addZNode(userDTO.getUsername());
 
-        ServerResponseDTO serverResponse;
-
-        this.zooKeeperBL.addZNode(userDTO.getUsername(), userAdded);
-
-        if(userAdded)
-            serverResponse = new ServerResponseDTO("Successfully added user " + userDTO.getUsername());
-        else
-            serverResponse = new ServerResponseDTO("Successfully logged in.");
+        ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged in.");
 
         return new ResponseEntity<>(serverResponse, HttpStatus.OK);
     }
 
+    @LeaderOnly
     @PostMapping("/logout")
-    public ResponseEntity<ServerResponseDTO> Logout(@CookieValue(value = "username", defaultValue = "ss") String username) {
-        // TODO Remove user from /live_nodes
+    public ResponseEntity<ServerResponseDTO> Logout(@CookieValue(value = "username", defaultValue = "") String username) {
 
-        System.out.println("Cookie Value: " + username);
-        ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged out.");
+        if(username.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ServerResponseDTO("User does not exist!"));
+        }
 
-        return ResponseEntity.ok(serverResponse);
+        this.zooKeeperService.removeZNodeFromLiveNodes(username);
+
+        this.userService.userLeft(username);
+
+        return ResponseEntity.ok(new ServerResponseDTO("Successfully logged out."));
     }
 }

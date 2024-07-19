@@ -70,10 +70,8 @@ public class LeaderElection implements Watcher {
 
                             ClusterInfo.getClusterInfo().getAllNodes().add(newChild);
 
-                            CompletableFuture.runAsync(() -> this.notificationService.nodeConnectedNotification(newChild, nodeType))
-                                    .thenRunAsync(() -> this.notificationService.nodeDeletedNotification(newChild, nodeType));
-
-                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT));
+                            this.notificationService.nodeConnectedOfflineNotification(newChild, nodeType);
+                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT_OFFLINE));
                         }
                         else {
                             ClusterInfo.getClusterInfo().getAllNodes().clear();
@@ -229,24 +227,22 @@ public class LeaderElection implements Watcher {
                 this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
             }
             else {
-                this.notificationService.nodeConnectedNotification(addedNode);
-                // TODO Nekako optimizovati ovaj broadcast, skup je, ruzno je
-                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_CONNECT));
-                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
+                this.notificationService.nodeConnectedOnlineNotification(addedNode);
+                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_CONNECT_ONLINE));
             }
 
             ClusterInfo.getClusterInfo().getLiveNodes().clear();
             ClusterInfo.getClusterInfo().getLiveNodes().addAll(children);
         }
         else {
-            // Deletion occurred
+            // DISCONNECT occurred
             previousChildren.removeAll(currentChildren);
 
             Iterator<String> iterator = previousChildren.iterator();
-            String deletedNode = iterator.hasNext() ? iterator.next() : null;
+            String disconnectedNode = iterator.hasNext() ? iterator.next() : null;
 
-            this.notificationService.nodeDeletedNotification(deletedNode);
-            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(deletedNode, getNodeType(deletedNode), NodeOperations.OPERATION_DELETE));
+            this.notificationService.nodeDisconnectedNotification(disconnectedNode);
+            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(disconnectedNode, getNodeType(disconnectedNode), NodeOperations.OPERATION_DISCONNECT));
 
             ClusterInfo.getClusterInfo().setLiveNodes(children);
         }

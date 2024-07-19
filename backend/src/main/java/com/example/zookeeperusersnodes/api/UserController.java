@@ -1,37 +1,43 @@
 package com.example.zookeeperusersnodes.api;
-
 import com.example.zookeeperusersnodes.annotation.LeaderOnly;
-import com.example.zookeeperusersnodes.bl.ZooKeeperBL;
 import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserDTO;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.example.zookeeperusersnodes.services.interfaces.UserService;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
-    private final Map<String, Long> userActivity = new ConcurrentHashMap<>();
-    private final ZooKeeperBL zooKeeperBL;
+    private final UserService userService;
+    private final ZooKeeperService zooKeeperService;
     private boolean userDisconnected = true;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public UserController(ZooKeeperBL zooKeeperBL) {
-        this.zooKeeperBL = zooKeeperBL;
+    public UserController(UserService userService, ZooKeeperService zooKeeperService) {
+        this.userService = userService;
+        this.zooKeeperService = zooKeeperService;
+    }
+
+    @LeaderOnly
+    @PostMapping("/add")
+    public ResponseEntity<ServerResponseDTO> addUser(@RequestBody UserDTO userDTO) {
+        this.zooKeeperService.addZNode(userDTO.getUsername(), true);
+
+        ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully added user " + userDTO.getUsername());
+
+        return new ResponseEntity<>(serverResponse, HttpStatus.OK);
     }
 
     @LeaderOnly
     @PostMapping("/removeUser")
     public ResponseEntity<ServerResponseDTO> removeUser(@RequestParam(name = "userRemoved") String username) {
-        this.zooKeeperBL.removeZNode(username);
+        this.zooKeeperService.removeZNode(username);
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("User " + username + " removed.");
 
@@ -43,25 +49,17 @@ public class UserController {
         if(username.equals("error"))
             return ResponseEntity.badRequest().build();
         else {
-            userActivity.put(username, System.currentTimeMillis());
+            this.userService.getUserActivity().put(username, System.currentTimeMillis());
 
-            if(userDisconnected) {
-                this.zooKeeperBL.addZNode(username);
-                userDisconnected = false;
-            }
+            // maybe the user closed tab for 5 mins then returned, he will not login again
+            // need to be added again and again
+//            if(userDisconnected) {
+                this.zooKeeperService.addZNode(username);
+//                userDisconnected = false;
+//            }
 
             return ResponseEntity.ok().build();
         }
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<ServerResponseDTO> userLeft(@CookieValue(value = "username", defaultValue = "error") String username) {
-        userActivity.remove(username);
-        System.out.println("Removed user: " + username);
-
-        ServerResponseDTO serverResponse = new ServerResponseDTO("Logging you out.");
-
-        return ResponseEntity.ok(serverResponse);
     }
 
 //     Periodically check for inactive users
@@ -69,12 +67,12 @@ public class UserController {
     public void checkInactiveUsers() {
         long currentTime = System.currentTimeMillis();
 
-        userActivity.entrySet().removeIf(entry -> {
+        this.userService.getUserActivity().entrySet().removeIf(entry -> {
             boolean inactive = currentTime - entry.getValue() > 60000;
             if (inactive) {
                 System.out.println("Removing inactive user: " + entry.getKey());
                 userDisconnected = true;
-                this.zooKeeperBL.removeZNodeFromLiveNodes(entry.getKey());
+                this.zooKeeperService.removeZNodeFromLiveNodes(entry.getKey());
             }
             return inactive;
         });
