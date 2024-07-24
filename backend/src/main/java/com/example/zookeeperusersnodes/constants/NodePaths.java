@@ -7,5 +7,4 @@ public final class NodePaths {
     public static final String ELECTION_PATH = "/election";
     public static final String ALL_NODES_PATH = "/all_nodes";
     public static final String LIVE_NODES_PATH = "/live_nodes";
-    public static final String MESSAGING_PATH = "/messages";
 }

@@ -4,7 +4,6 @@ import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserDTO;
 import com.example.zookeeperusersnodes.services.interfaces.UserService;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +16,6 @@ public class UserController {
     private final UserService userService;
     private final ZooKeeperService zooKeeperService;
     private boolean userDisconnected = true;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public UserController(UserService userService, ZooKeeperService zooKeeperService) {
         this.userService = userService;
@@ -25,7 +23,7 @@ public class UserController {
     }
 
     @LeaderOnly
-    @PostMapping("/add")
+    @PostMapping("/addUser")
     public ResponseEntity<ServerResponseDTO> addUser(@RequestBody UserDTO userDTO) {
         this.zooKeeperService.addZNode(userDTO.getUsername(), true);
 
@@ -51,18 +49,15 @@ public class UserController {
         else {
             this.userService.getUserActivity().put(username, System.currentTimeMillis());
 
-            // maybe the user closed tab for 5 mins then returned, he will not login again
-            // need to be added again and again
-//            if(userDisconnected) {
+            if(userDisconnected) {
                 this.zooKeeperService.addZNode(username);
-//                userDisconnected = false;
-//            }
+                userDisconnected = false;
+            }
 
             return ResponseEntity.ok().build();
         }
     }
 
-//     Periodically check for inactive users
     @Scheduled(fixedRate = 60000)
     public void checkInactiveUsers() {
         long currentTime = System.currentTimeMillis();

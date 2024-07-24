@@ -35,7 +35,6 @@ public class AuthController {
     @LeaderOnly
     @PostMapping("/logout")
     public ResponseEntity<ServerResponseDTO> Logout(@CookieValue(value = "username", defaultValue = "") String username) {
-
         if(username.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ServerResponseDTO("User does not exist!"));

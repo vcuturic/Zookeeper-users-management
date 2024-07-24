@@ -75,10 +75,20 @@ export class HomeComponent implements OnInit, OnDestroy{
         this.userService.sendHeartbeat();
 
         this.backendService.getAllZnodesAndChildren(this.zNodes, url);
-        this.backendService.getAllNodesChildrenInfo(this.allNodesChildren, url);
-        this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
+        this.backendService.getAllNodesChildren(this.allNodesChildren, url);
+
+        setTimeout(() => {
+          // console.log('This runs after the current execution context');
+          this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
+        }, 0);
+        
 
         if(this.initTriggered) {
+          if(this.backendService.getBackendTopicSubscription()) {
+            this.backendService.destruct();
+            console.log("Ladies and gentleman, we got them.");
+          }
+
           this.topicSubscription = this.rxStompService
             .watch(Constants.DESTINATION_ROUTE)
             .subscribe((message: Message) => {
@@ -86,6 +96,11 @@ export class HomeComponent implements OnInit, OnDestroy{
           });     
         } 
         else {
+          // Why double CONNECT_OFFLINE
+          // Scenario:
+          // 1# Login, initTriggered == true. Some1 added an user, u handle it (line 90), but the BE-Service stores it
+          // 2# Logout
+          // 3# Login, initTriggered == false. Now u read that stored message (line 101)
           this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
             this.updateMessagesFromBackend = value;
             this.handleBackendMessages(value);

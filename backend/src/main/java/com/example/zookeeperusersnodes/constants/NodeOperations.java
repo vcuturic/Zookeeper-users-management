@@ -8,6 +8,7 @@ public final class NodeOperations {
 
     public static final String OPERATION_DELETE = "delete";
     public static final String OPERATION_DISCONNECT = "disconnected";
+
     // Connected - Make a new zNode
     // - offline - don't make it in live_nodes
     // - online - make it in live_nodes

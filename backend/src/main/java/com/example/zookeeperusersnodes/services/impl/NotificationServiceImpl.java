@@ -27,25 +27,25 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void nodeConnectedOnlineNotification(String addedNode) {
+    public synchronized void nodeConnectedOnlineNotification(String addedNode) {
         Message msg = new Message(NodeOperations.OPERATION_CONNECT_ONLINE, new NodeDTO(addedNode, null, null));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
 
     @Override
-    public void nodeConnectedOnlineNotification(String addedNode, int nodeType) {
+    public synchronized void nodeConnectedOnlineNotification(String addedNode, int nodeType) {
         Message msg = new Message(NodeOperations.OPERATION_CONNECT_ONLINE, new NodeDTO(addedNode, nodeType, true));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
 
     @Override
-    public void nodeConnectedOfflineNotification(String addedNode) {
+    public synchronized void nodeConnectedOfflineNotification(String addedNode) {
         Message msg = new Message(NodeOperations.OPERATION_CONNECT_OFFLINE, new NodeDTO(addedNode, null, null));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
 
     @Override
-    public void nodeConnectedOfflineNotification(String addedNode, int nodeType) {
+    public synchronized void nodeConnectedOfflineNotification(String addedNode, int nodeType) {
         Message msg = new Message(NodeOperations.OPERATION_CONNECT_OFFLINE, new NodeDTO(addedNode, nodeType, true));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
@@ -63,13 +63,13 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void nodeDisconnectedNotification(String deletedNode) {
+    public synchronized void nodeDisconnectedNotification(String deletedNode) {
         Message msg = new Message(NodeOperations.OPERATION_DISCONNECT, new NodeDTO(deletedNode, null, null, false));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
 
     @Override
-    public void nodeDisconnectedNotification(String deletedNode, int nodeType) {
+    public synchronized void nodeDisconnectedNotification(String deletedNode, int nodeType) {
         Message msg = new Message(NodeOperations.OPERATION_DISCONNECT, new NodeDTO(deletedNode, nodeType, false));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }

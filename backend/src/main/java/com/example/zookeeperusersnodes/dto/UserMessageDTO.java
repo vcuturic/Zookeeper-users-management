@@ -9,6 +9,10 @@ public class UserMessageDTO {
         this.message = message;
     }
 
+    public UserMessageDTO() {
+
+    }
+
     public String getUsername() {
         return username;
     }

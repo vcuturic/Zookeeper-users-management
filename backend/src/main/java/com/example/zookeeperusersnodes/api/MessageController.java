@@ -21,8 +21,6 @@ public class MessageController {
     @LeaderOnly
     @PostMapping("/receive")
     public ResponseEntity<ServerResponseDTO> receiveMessage(@RequestBody UserMessageDTO userMessageDTO) {
-        System.out.println(userMessageDTO.getUsername() + " " + userMessageDTO.getMessage());
-
         this.zooKeeperService.addMessageZNode(userMessageDTO.getUsername(), userMessageDTO.getMessage());
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully received message.");

@@ -2,8 +2,6 @@ package com.example.zookeeperusersnodes.interceptor;
 
 import com.example.zookeeperusersnodes.annotation.LeaderOnly;
 import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
-import com.example.zookeeperusersnodes.dto.UserDTO;
-import com.example.zookeeperusersnodes.services.interfaces.LeaderService;
 import com.example.zookeeperusersnodes.services.interfaces.NotificationService;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,28 +9,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Component
 public class LeaderInterceptor implements HandlerInterceptor {
-    @Autowired
-    private LeaderService leaderService;
     @Autowired
     private ZooKeeperService zooKeeperService;
     @Autowired
@@ -50,9 +38,10 @@ public class LeaderInterceptor implements HandlerInterceptor {
         if (handler instanceof HandlerMethod) {
             Method method = ((HandlerMethod) handler).getMethod();
             if (method.isAnnotationPresent(LeaderOnly.class)) {
-                if (!leaderService.isThisNodeLeader(this.zooKeeperService.getCurrentZNode())) {
+                if (!zooKeeperService.isThisNodeLeader(this.zooKeeperService.getCurrentZNode())) {
                     // Forward request to leader instance
-                    String leaderAddress = this.leaderService.getLeaderAddress();
+                    String jsonResponse;
+                    String leaderAddress = this.zooKeeperService.getLeaderAddress();
 
                     System.out.println("METHOD type:" + request.getMethod());
                     System.out.println("Request URI: " + request.getRequestURI());
@@ -77,8 +66,6 @@ public class LeaderInterceptor implements HandlerInterceptor {
                             ServerResponseDTO.class
                     );
 
-                    String jsonResponse;
-
                     try {
                         jsonResponse = objectMapper.writeValueAsString(responseEntity.getBody());
                     } catch (JsonProcessingException e) {
@@ -98,6 +85,7 @@ public class LeaderInterceptor implements HandlerInterceptor {
     public HttpHeaders extractHeaders(HttpServletRequest request) {
         HttpHeaders headers = new HttpHeaders();
         Enumeration<String> headerNames = request.getHeaderNames();
+
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
             Enumeration<String> headerValues = request.getHeaders(headerName);
@@ -123,8 +111,7 @@ public class LeaderInterceptor implements HandlerInterceptor {
 
     public String getBodyFromRequest(HttpServletRequest request) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader bufferedReader = null;
-
+        BufferedReader bufferedReader;
 
         bufferedReader = request.getReader();
         String line;

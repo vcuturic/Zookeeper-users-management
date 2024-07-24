@@ -48,7 +48,7 @@ export class UserService {
   }
 
   addUser(userData: LoginData) {
-    return this.http.post<LoginData>(`${this.backendUrl}/${this.userApiUrl}/add`, userData);
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.userApiUrl}/addUser`, userData);
   }
 
   removeUser(username: string) {

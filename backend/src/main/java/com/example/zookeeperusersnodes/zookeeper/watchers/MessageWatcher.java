@@ -1,20 +1,27 @@
 package com.example.zookeeperusersnodes.zookeeper.watchers;
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 import com.example.zookeeperusersnodes.services.interfaces.MessageService;
+import com.example.zookeeperusersnodes.services.interfaces.WebSocketService;
+import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 public class MessageWatcher implements Watcher {
     private final ZooKeeper zooKeeper;
     private final MessageService messageService;
+    private WebSocketService webSocketService;
+    private final ZooKeeperService zooKeeperService;
 
-    public MessageWatcher(ZooKeeper zooKeeper, MessageService messageService) {
+    public MessageWatcher(ZooKeeper zooKeeper, MessageService messageService, WebSocketService webSocketService, ZooKeeperService zooKeeperService) {
         this.zooKeeper = zooKeeper;
         this.messageService = messageService;
+        this.webSocketService = webSocketService;
+        this.zooKeeperService = zooKeeperService;
     }
 
 
@@ -37,6 +44,7 @@ public class MessageWatcher implements Watcher {
                 String[] parts = userPath.split("/");
                 String username = parts[parts.length - 1];
                 this.messageService.sendMessage(new UserMessageDTO(username, message));
+                this.webSocketService.broadcastMessage(this.zooKeeperService.getCurrentZNode(), new UserMessageDTO(username, message));
             }
             catch (KeeperException | InterruptedException e) {
                     throw new RuntimeException(e);

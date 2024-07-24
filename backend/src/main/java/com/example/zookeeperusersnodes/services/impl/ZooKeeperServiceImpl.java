@@ -4,6 +4,7 @@ import com.example.zookeeperusersnodes.constants.NodePaths;
 import com.example.zookeeperusersnodes.constants.NodeTypes;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
+import com.example.zookeeperusersnodes.utils.IPAddressChecker;
 import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
 import com.example.zookeeperusersnodes.zookeeper.ZooKeeperInitializer;
 import org.apache.zookeeper.CreateMode;
@@ -48,12 +49,7 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
     }
 
     @Override
-    public List<String> getAllNodesChildren() {
-        return ClusterInfo.getClusterInfo().getAllNodes();
-    }
-
-    @Override
-    public List<NodeDTO> getAllNodesChildrenInfo() {
+    public List<NodeDTO> getAllNodesChildren() {
         try {
             List<String> children = zooKeeper.getChildren(NodePaths.ALL_NODES_PATH, false);
 
@@ -95,6 +91,11 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
     @Override
     public String getLeaderInfo() {
         return ClusterInfo.getClusterInfo().getLeaderNode();
+    }
+
+    @Override
+    public boolean isThisNodeLeader(String nodeName) {
+        return ClusterInfo.getClusterInfo().getLeaderNode().equals(nodeName);
     }
 
     @Override
@@ -223,6 +224,19 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
         // Node checked its children, populated the list if there were any
         NodeDTO newNode = new NodeDTO(nodeName, null, newNodeChildren);
         parentsChildren.add(newNode);
+    }
+
+    public List<String> getServerNodesFromAllNodes(List<String> allNodes) {
+        List<String> allNodesCopy = new ArrayList<>(allNodes);
+        List<String> serverNodesAddresses = new ArrayList<>();
+
+        for (String zNode : allNodesCopy) {
+            if(IPAddressChecker.isIPAddress(zNode)) {
+                serverNodesAddresses.add(zNode);
+            }
+        }
+
+        return serverNodesAddresses;
     }
 
     public static boolean containsName(List<NodeDTO> list, String name) {

@@ -1,5 +1,4 @@
 package com.example.zookeeperusersnodes.config;
-
 import com.example.zookeeperusersnodes.interceptor.LeaderInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

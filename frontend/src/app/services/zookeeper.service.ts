@@ -15,18 +15,14 @@ export class ZookeeperService {
 
 
   getAllZnodesWithChildren(backEndUrl: string): Observable<any> {
-    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/servernodes`)
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/serverNodes`)
   }
 
   getAllNodesChildren(backEndUrl: string): Observable<any> {
-    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allnodes`);
-  }
-
-  getAllNodesChildrenInfo(backEndUrl: string): Observable<any> {
-    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allnodesinfo`);
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/allNodes`);
   }
 
   getLiveNodesChildren(backEndUrl: string): Observable<any> {
-    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/livenodes`);
+    return this.http.get<any>(`${backEndUrl}/${this.zookeeperApiUrl}/liveNodes`);
   }
 }

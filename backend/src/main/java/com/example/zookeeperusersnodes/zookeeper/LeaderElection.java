@@ -3,9 +3,11 @@ import com.example.zookeeperusersnodes.constants.NodeOperations;
 import com.example.zookeeperusersnodes.constants.NodePaths;
 import com.example.zookeeperusersnodes.constants.NodeTypes;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.services.interfaces.MessageService;
 import com.example.zookeeperusersnodes.services.interfaces.NotificationService;
 import com.example.zookeeperusersnodes.services.interfaces.WebSocketService;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
+import com.example.zookeeperusersnodes.zookeeper.interfaces.WatchersManager;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.zookeeper.*;
@@ -38,9 +40,14 @@ public class LeaderElection implements Watcher {
     @Autowired
     private WebSocketService webSocketService;
 
-    public LeaderElection(ZooKeeperInitializer zooKeeperInitializer, NotificationService notificationService) {
+    private final WatchersManager watcherManager;
+    private final MessageService messageService;
+
+    public LeaderElection(ZooKeeperInitializer zooKeeperInitializer, NotificationService notificationService, WatchersManager watcherManager, MessageService messageService) {
         this.zooKeeper = zooKeeperInitializer.getZooKeeperInstance();
         this.notificationService = notificationService;
+        this.watcherManager = watcherManager;
+        this.messageService = messageService;
     }
 
     @Override
@@ -158,6 +165,10 @@ public class LeaderElection implements Watcher {
                 zooKeeper.addWatch(LIVE_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 ClusterInfo.getClusterInfo().setLeaderNode(currentZNode);
                 ClusterInfo.getClusterInfo().setLeaderAddress(getServerInfo());
+
+                Messenger messenger = new Messenger(zooKeeper, watcherManager, messageService, zooKeeperService, webSocketService);
+                messenger.init();
+
             } else {
                 System.out.println("I am not the leader." + currentZNode);
                 ClusterInfo.getClusterInfo().setLeaderNode(ELECTION_PATH + "/" + children.getFirst());

@@ -110,6 +110,10 @@ export class BackendService implements OnDestroy {
       this.topicSubscription.unsubscribe();
   }
 
+  getBackendTopicSubscription(): boolean {
+    return this.topicSubscription ? true : false;
+  }
+
   async checkBackendAvailability(currentBackendIndex: number) {
     if(!this.connectedToBackend) {
       const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
@@ -147,10 +151,6 @@ export class BackendService implements OnDestroy {
     this.updateMessagesFromBackendSubject.next(jsonString);
   }
 
-  clearUpMessagesFromUser() {
-    this.updateMessagesFromBackendSubject.next("");
-  }
-
   getAllNodesChildren(allNodesChildren: ZNode[], backendUrl?: string) {
     var backendInitialized = false;
 
@@ -159,36 +159,6 @@ export class BackendService implements OnDestroy {
     } 
 
     this.zooKeeperService.getAllNodesChildren(backendInitialized ? backendUrl! : this.availableBackEndUrl!).subscribe({
-      next: (res: any) => {
-        if(res) {
-          // if(allNodesChildren2)
-            // allNodesChildren2 = [];
-          
-          for (let i = 0; i < res.length; i++) {
-            const newNode: ZNode = {
-              name: res[i],
-              children: [],
-              online: false,
-              type: Constants.ZNODE_TYPE_INITIAL
-            }
-            allNodesChildren.push(newNode);
-          }
-        }
-      },
-      error: (err: any) => {
-        this.checkBackendAvailability(0);
-      }
-    });
-  }
-
-  getAllNodesChildrenInfo(allNodesChildren: ZNode[], backendUrl?: string) {
-    var backendInitialized = false;
-
-    if (backendUrl) {
-      backendInitialized = true;
-    } 
-
-    this.zooKeeperService.getAllNodesChildrenInfo(backendInitialized ? backendUrl! : this.availableBackEndUrl!).subscribe({
       next: (res: any) => {
         if(res) {        
           for (let i = 0; i < res.length; i++) {
