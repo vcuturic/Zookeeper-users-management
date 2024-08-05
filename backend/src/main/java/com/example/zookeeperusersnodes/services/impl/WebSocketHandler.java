@@ -76,7 +76,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             ClusterInfo.getClusterInfo().getLiveNodes().remove(nodeDTO.name);
         }
         if(nodeDTO.status.equals(NodeOperations.OPERATION_DELETE)) {
-            this.notificationService.nodeDeletedNotification(nodeDTO.name, nodeDTO.type);
+            this.notificationService.nodeDeletedNotification(nodeDTO.name);
 
             ClusterInfo.getClusterInfo().getAllNodes().remove(nodeDTO.name);
             ClusterInfo.getClusterInfo().getLiveNodes().remove(nodeDTO.name);

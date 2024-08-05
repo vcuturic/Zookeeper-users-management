@@ -68,7 +68,7 @@ public class LeaderElection implements Watcher {
                 if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
                     try {
                         List<String> children = zooKeeper.getChildren(ALL_NODES_PATH, null);
-                        String newChild;
+                        String newChild, deletedChild;
 
                         if(children.size() > ClusterInfo.getClusterInfo().getAllNodes().size()) {
                             // Addition occurred
@@ -81,12 +81,17 @@ public class LeaderElection implements Watcher {
                             this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT_OFFLINE));
                         }
                         else {
-                            ClusterInfo.getClusterInfo().getAllNodes().clear();
-                            ClusterInfo.getClusterInfo().getAllNodes().addAll(children);
+                            // Deletion occurred
+                            deletedChild = findDifferentElement(ClusterInfo.getClusterInfo().getAllNodes(), children);
+
+                            ClusterInfo.getClusterInfo().getAllNodes().remove(deletedChild);
+
+                            this.notificationService.nodeDeletedNotification(deletedChild);
+                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(deletedChild, NodeOperations.OPERATION_DELETE));
                         }
                     }
                     catch (KeeperException | InterruptedException e) {
-                        throw new RuntimeException(e);
+//                        throw new RuntimeException(e);
                     }
                 }
                 System.out.println(ALL_NODES_PATH + ": " + ClusterInfo.getClusterInfo().getAllNodes());

@@ -52,7 +52,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public synchronized void nodeDeletedNotification(String deletedNode) {
-        Message msg = new Message(NodeOperations.OPERATION_DELETE, new NodeDTO(deletedNode, null, null, false));
+        Message msg = new Message(NodeOperations.OPERATION_DELETE, new NodeDTO(deletedNode, NodeOperations.OPERATION_DELETE));
         simpMessagingTemplate.convertAndSend(DESTINATION_ROUTE, msg);
     }
 

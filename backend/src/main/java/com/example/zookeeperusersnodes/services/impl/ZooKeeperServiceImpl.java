@@ -166,13 +166,22 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
 
         try {
             if(zooKeeper.exists(NodePaths.ALL_NODES_PATH + newNodeName, false) != null) {
-                zooKeeper.delete(NodePaths.ALL_NODES_PATH + newNodeName, -1);
+                List<String> children = zooKeeper.getChildren(NodePaths.ALL_NODES_PATH + newNodeName, true);
+
+                if(children.isEmpty())
+                    zooKeeper.delete(NodePaths.ALL_NODES_PATH + newNodeName, -1);
+                else {
+                    for (String child : children) {
+                        String childPath = NodePaths.ALL_NODES_PATH + newNodeName + "/" + child;
+                        zooKeeper.delete(childPath, -1);
+                    }
+                }
             }
 
             this.removeZNodeFromLiveNodes(username);
         }
         catch (KeeperException | InterruptedException e) {
-            throw new RuntimeException(e);
+//            throw new RuntimeException(e);
         }
     }
 

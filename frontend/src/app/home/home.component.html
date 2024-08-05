@@ -26,10 +26,9 @@
     </div>
     <div class="col">
         <div class="text-center">
-            <app-nodes-visual [zNodes]="allNodesChildren" (zNodesChange)="onZNodesChange($event)"></app-nodes-visual>
+            <app-nodes-visual [allNodes]="allNodesChildren" (allNodesChange)="onAllNodesChange($event)"></app-nodes-visual>
         </div>
         <div class="main-chat-container">
-            <app-user-list></app-user-list>
             <app-chat></app-chat>
         </div>
     </div>

@@ -35,8 +35,8 @@ import { UserService } from '../../services/user.service';
   styleUrl: './nodes-visual.component.css'
 })
 export class NodesVisualComponent implements OnInit {
-  @Input({required: true}) zNodes!: ZNode[]; 
-  @Output() zNodesChange = new EventEmitter<ZNode[]>();
+  @Input({required: true}) allNodes!: ZNode[]; 
+  @Output() allNodesChange = new EventEmitter<ZNode[]>();
 
   items: MenuItem[];
   itemsShown: boolean = false;
@@ -95,8 +95,8 @@ export class NodesVisualComponent implements OnInit {
       next: (res: any) => {
         if(res) {
           console.log(res);
-          this.zNodes = this.zNodes.filter(znode => znode.name !== zNode.name);
-          this.zNodesChange.emit(this.zNodes);
+          this.allNodes = this.allNodes.filter(znode => znode.name !== zNode.name);
+          this.allNodesChange.emit(this.allNodes);
         }
       },
       error: (err: any) => {
@@ -142,14 +142,14 @@ export class NodesVisualComponent implements OnInit {
 
   closeMenus(expect?: ZNode): void {
     if(expect) {
-      this.zNodes.forEach(znode => {
+      this.allNodes.forEach(znode => {
         if (znode.name !== expect.name) {
           znode.showMenu = false;
         }
       });
     }
     else {
-      this.zNodes.forEach(znode => znode.showMenu = false);
+      this.allNodes.forEach(znode => znode.showMenu = false);
     }
   }
 

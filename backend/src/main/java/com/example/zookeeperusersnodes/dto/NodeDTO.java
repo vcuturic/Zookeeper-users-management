@@ -33,6 +33,11 @@ public class NodeDTO {
 
     }
 
+    public NodeDTO(String name, String status) {
+        this.name = name;
+        this.status = status;
+    }
+
     public NodeDTO(String name, String data, List<NodeDTO> children) {
         this.name = name;
         this.data = data;

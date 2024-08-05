@@ -5,7 +5,7 @@
       <i *ngIf="expanded" class="pi pi-fw pi-angle-down"></i>
     </span>
     <i class="pi pi-fw pi-database icon"></i>
-    <span >{{ zNode.name }}</span>
+    <span > {{ zNode.name }}</span>
   </div>
   <ul *ngIf="expanded && zNode.children && zNode.children.length">
     <li *ngFor="let child of zNode.children">

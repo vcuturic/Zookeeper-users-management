@@ -8,7 +8,6 @@ import { Subscription } from 'rxjs';
 import { MessageStructure } from '../models/message-structure';
 import * as Constants from '../constants/constants';
 import { ChatComponent } from '../components/chat/chat-component/chat.component';
-import { UserListComponent } from '../components/chat/user-list/user-list.component';
 import { BackendInfoService } from '../services/backend-info.service';
 import { BackendService } from '../services/backend.service';
 import { AuthService } from '../services/auth.service';
@@ -25,7 +24,6 @@ import { LoadingComponent } from '../components/loading/loading.component';
     NodeTreeComponent,
     NodesVisualComponent,
     ChatComponent,
-    UserListComponent,
     ButtonModule,
     CommonModule,
     LoadingComponent
@@ -40,9 +38,10 @@ export class HomeComponent implements OnInit, OnDestroy{
   private topicSubscription?: Subscription;
   private connectingToBackendSubscription: Subscription;
   private subscription?: Subscription;
-  private updateMessagesFromBackend: string = ''
+  private updateMessagesFromBackend: string = '';
   initTriggered: boolean = false;
   loading: boolean = true;
+  backendUrl: string = '';
 
   constructor(
     private rxStompService: RxStompService,
@@ -71,6 +70,7 @@ export class HomeComponent implements OnInit, OnDestroy{
       } else {
         // Handle the case when backendUrl is updated
         console.log('Backend URL updated: ', url, this.initTriggered);
+        this.backendUrl = url;
 
         this.userService.sendHeartbeat();
 
@@ -172,6 +172,8 @@ export class HomeComponent implements OnInit, OnDestroy{
           this.allNodesChildren = this.allNodesChildren.filter(znode => znode.name !== msg.zNode.name);
         }
       }
+
+      this.backendService.getAllZnodesAndChildren(this.zNodes, this.backendUrl);
     }
   }
 
@@ -196,7 +198,7 @@ export class HomeComponent implements OnInit, OnDestroy{
     });
   }
 
-  onZNodesChange(updatedZNodes: ZNode[]) {
+  onAllNodesChange(updatedZNodes: ZNode[]) {
     this.allNodesChildren = updatedZNodes;
   }
 }

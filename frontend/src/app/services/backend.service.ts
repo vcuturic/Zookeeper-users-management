@@ -213,12 +213,21 @@ export class BackendService implements OnDestroy {
     this.zooKeeperService.getAllZnodesWithChildren(backendInitialized ? backendUrl! : this.availableBackEndUrl!).subscribe({
       next: (res: any) => {
         if(res) {
+
+          if(zNodes.length > 0) 
+            zNodes.length = 0;
+          
           const list = res[0].children;
 
           for (let i = 0; i < list.length; i++) {
             zNodes.push(list[i]);
           }
+
+          // console.log(zNodes);
+
         }
+
+        return zNodes;
       },
       error: (err: any) => {
         this.checkBackendAvailability(0);

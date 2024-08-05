@@ -58,12 +58,12 @@ public class UserController {
         }
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 100000)
     public void checkInactiveUsers() {
         long currentTime = System.currentTimeMillis();
 
         this.userService.getUserActivity().entrySet().removeIf(entry -> {
-            boolean inactive = currentTime - entry.getValue() > 60000;
+            boolean inactive = currentTime - entry.getValue() > 100000;
             if (inactive) {
                 System.out.println("Removing inactive user: " + entry.getKey());
                 userDisconnected = true;
