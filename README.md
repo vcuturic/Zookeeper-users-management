@@ -36,5 +36,8 @@ A simple Angular, Java, Zookeeper project. It shows and manages zookeeper nodes(
 
 3. Open project with IntelliJ or other preferred editor. It should recognize port and instance configurations:
 
+![Test](https://github.com/vcuturic/Zookeeper-users-management/blob/main/other-files/project_instances.png)
 
+4. Start any or all instances.
 
+5. Start frontend instance, `ng serve`, it should automatically connect to the first available server instance.
