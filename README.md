@@ -28,3 +28,13 @@ A simple Angular, Java, Zookeeper project. It shows and manages zookeeper nodes(
 
 * **<ins>Dynamic Server Connection</ins>**: In the event of a server failure, if a frontend instance was connected to that server, it automatically searches for the next available server.
 
+## Setup and Usage
+
+1. Install Apache Zookeeper, follow [Zookeeper Tutorial](https://github.com/vcuturic/Zookeeper-users-management/blob/main/zookeeper/Zookeeper%20tutorial.docx)
+
+2. Start Zookeeper server using `zkserver` in the console described in tutorial above.
+
+3. Open project with IntelliJ or other preferred editor. It should recognize port and instance configurations:
+
+
+
