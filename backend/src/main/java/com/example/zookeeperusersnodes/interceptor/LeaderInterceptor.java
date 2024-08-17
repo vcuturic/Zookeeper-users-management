@@ -43,19 +43,19 @@ public class LeaderInterceptor implements HandlerInterceptor {
                     String jsonResponse;
                     String leaderAddress = this.zooKeeperService.getLeaderAddress();
 
-                    System.out.println("METHOD type:" + request.getMethod());
-                    System.out.println("Request URI: " + request.getRequestURI());
+//                    System.out.println("METHOD type:" + request.getMethod());
+//                    System.out.println("Request URI: " + request.getRequestURI());
 
                     String url = "http://" + leaderAddress + request.getRequestURI();
                     url = extractAndSetParameterNamesAndValues(request, url);
 
                     String requestBody = getBodyFromRequest(request);
-                    if(!requestBody.isEmpty()) {
-                        System.out.println("Request body: " + requestBody);
-                    }
-                    else {
-                        System.out.println("Request: No body provided");
-                    }
+//                    if(!requestBody.isEmpty()) {
+//                        System.out.println("Request body: " + requestBody);
+//                    }
+//                    else {
+//                        System.out.println("Request: No body provided");
+//                    }
 
                     HttpEntity<String> entity = new HttpEntity<>(requestBody.isEmpty() ? null : requestBody, extractHeaders(request));
 
@@ -103,7 +103,7 @@ public class LeaderInterceptor implements HandlerInterceptor {
             String paramName = parameterNames.nextElement();
             String paramValue = request.getParameter(paramName);
             url = url.concat("?" + paramName + "=" + paramValue);
-            System.out.println("Parameter Name: " + paramName + ", Value: " + paramValue);
+//            System.out.println("Parameter Name: " + paramName + ", Value: " + paramValue);
         }
 
         return url;

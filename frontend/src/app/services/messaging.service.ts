@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { UserMessage } from '../models/user-message';
 import { BehaviorSubject, Subscription } from 'rxjs';
@@ -28,11 +28,13 @@ export class MessagingService {
     this.rxStompService.watch('/topic/messages').subscribe((message) => {
       const parsedMessage: UserMessage = JSON.parse(message.body);
       const currentMessages = this.messagesSubject.getValue();
+      console.log(parsedMessage);
       this.messagesSubject.next([...currentMessages, parsedMessage]);
     });
   }
 
   sendMessage(userMessage: UserMessage) {
-    return this.http.post<UserMessage>(`${this.backendUrl}/${this.messageApiUrl}/receive`, userMessage);
+    const headers = new HttpHeaders().set('request-from', window.location.origin);
+    return this.http.post<UserMessage>(`${this.backendUrl}/${this.messageApiUrl}/receive`, userMessage, {headers});
   }
 }

@@ -1,6 +1,8 @@
 package com.example.zookeeperusersnodes.services.interfaces;
 
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.dto.UserDTO;
+import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 import org.apache.zookeeper.ZooKeeper;
 
 import java.util.List;
@@ -19,5 +21,9 @@ public interface ZooKeeperService {
     void removeZNodeFromLiveNodes(String username);
     void removeZNode(String username);
     void addMessageZNode(String username, String message);
+    void addMessageZNode(UserMessageDTO userMessageDTO);
     List<String> getServerNodesFromAllNodes(List<String> allNodes);
+    void addUserZNode(UserDTO userDTO, boolean userAdded);
+    void removeUserZNode(String username);
+    void logoutUser(String username);
 }

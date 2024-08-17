@@ -1,31 +1,46 @@
 package com.example.zookeeperusersnodes.dto;
 
 public class UserMessageDTO {
-    private String username;
-    private String message;
+    private String from;
+    private String to;
+    private String text;
 
-    public UserMessageDTO(String username, String message) {
-        this.username = username;
-        this.message = message;
+    public UserMessageDTO(String from, String to, String text) {
+        this.from = from;
+        this.to = to;
+        this.text = text;
+    }
+
+    public UserMessageDTO(String to, String text) {
+        this.to = to;
+        this.text = text;
     }
 
     public UserMessageDTO() {
 
     }
 
-    public String getUsername() {
-        return username;
+    public String getFrom() {
+        return from;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setFrom(String from) {
+        this.from = from;
     }
 
-    public String getMessage() {
-        return message;
+    public String getTo() {
+        return to;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }

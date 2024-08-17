@@ -1,9 +1,19 @@
-<div class="chat-container">
-  <div class="messages">
-    <div *ngFor="let message of messages$ | async" [ngClass]="{'my-message': message.username === username, 'other-message': message.username !== username}">
-      <strong>{{ message.username }}:</strong> {{ message.message }}
+<div class="grid flex chat-container w-max">
+  <div class="col user-list bg-dark">
+    <div *ngFor="let user of userNodes" 
+         (click)="selectUser(user.name)" 
+         (mouseover)="hoverUser(user.name)"
+         [ngClass]="{'selected-user': selectedUser === user.name, 'hovered-user': hoveredUser === user.name}">
+      {{ user.name }}
     </div>
   </div>
-  <input [(ngModel)]="messageContent" placeholder="Type a message..." />
-  <button (click)="sendMessage()">Send</button>
+  <div class="col chat-content">
+    <div class="messages flex w-30rem">
+      <div *ngFor="let message of messages$ | async" [ngClass]="{'my-message': message.from === username, 'other-message': message.from !== username}">
+        <strong>{{ message.from }}:</strong> {{ message.text }}
+      </div>
+    </div>
+    <input [(ngModel)]="messageContent" placeholder="Type a message..." />
+    <button (click)="sendMessage()">Send</button>
+  </div>
 </div>

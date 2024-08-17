@@ -26,10 +26,10 @@
     </div>
     <div class="col">
         <div class="text-center">
-            <app-nodes-visual [allNodes]="allNodesChildren" (allNodesChange)="onAllNodesChange($event)"></app-nodes-visual>
+            <app-nodes-visual [allNodes]="personNodes" (allNodesChange)="onAllNodesChange($event)"></app-nodes-visual>
         </div>
-        <div class="main-chat-container">
-            <app-chat></app-chat>
+        <div class="flex align-items-center justify-content-center">
+            <app-chat [userNodes]="personNodes"></app-chat>
         </div>
     </div>
 </div>

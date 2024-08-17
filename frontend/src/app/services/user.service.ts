@@ -36,7 +36,8 @@ export class UserService {
   }
 
   sendHeartbeat() {
-    this.http.post(`${this.backendUrl}/${this.userApiUrl}/heartbeat`, null, {withCredentials: true}).subscribe();
+    const username = localStorage.getItem("username");
+    this.http.post(`${this.backendUrl}/${this.userApiUrl}/heartbeat`, username).subscribe();
   }
 
   stopHeartbeat() {
@@ -54,5 +55,9 @@ export class UserService {
   removeUser(username: string) {
     let params = new HttpParams().set('userRemoved', username);
     return this.http.post<any>(`${this.backendUrl}/${this.userApiUrl}/removeUser`, null, {params})
+  }
+
+  getUsers() {
+    return this.http.get<any>(`${this.backendUrl}/${this.userApiUrl}/getUsers`);
   }
 }

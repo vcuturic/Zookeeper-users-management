@@ -1,5 +1,4 @@
 .chat-container {
-  width: 400px;
   border: 1px solid #ccc;
   padding: 10px;
 }
@@ -38,4 +37,38 @@ input {
 
 button {
   padding: 5px 10px;
+}
+
+.user-list {
+  width: 200px;
+  border-right: 1px solid #ddd;
+  color: white;
+  padding: 10px;
+}
+
+.user-list div {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.user-list div:hover {
+  background-color: #e0e0e0;
+}
+
+.selected-user {
+  background-color: #cce5ff;
+  font-weight: bold;
+}
+
+.hovered-user {
+  background-color: #d3d3d3;
+  color: #000;
+}
+
+.chat-content {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
 }

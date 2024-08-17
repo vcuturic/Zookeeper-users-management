@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { BackendInfoService } from '../services/backend-info.service';
 import { LoadingComponent } from '../components/loading/loading.component';
+import { User } from '../models/user';
 
 @Component({
   selector: 'app-login',
@@ -64,12 +65,17 @@ export class LoginComponent implements OnInit, OnDestroy{
   login() {
     var username = this.loginForm.value.username!;
 
-    const loginData: LoginData = this.loginForm.value as LoginData;
-    this.authService.login(loginData).subscribe({
+    const userData: User = this.loginForm.value as User;
+    userData.online = true;  
+    userData.address = window.location.origin; 
+
+    console.log("userData: ");
+    console.log(userData);
+
+    this.authService.login(userData).subscribe({
       next: (res: any) => {
         if(res) {
           console.log(res);
-          // TODO Nekako se sve izdesava pa onda tek ovo
         }
       },
       error: (err: any) => {

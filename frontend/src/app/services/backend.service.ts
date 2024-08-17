@@ -96,13 +96,13 @@ export class BackendService implements OnDestroy {
       // }
     });
 
-    if(!this.topicSubscription) {
-      this.topicSubscription = this.rxStompService
-        .watch(Constants.DESTINATION_ROUTE)
-        .subscribe((message: Message) => {
-          this.storeBackendMessages(message.body);
-      });
-    }
+    // if(!this.topicSubscription) {
+    //   this.topicSubscription = this.rxStompService
+    //     .watch(Constants.DESTINATION_ROUTE)
+    //     .subscribe((message: Message) => {
+    //       this.storeBackendMessages(message.body);
+    //   });
+    // }
   }
 
   destruct() {
@@ -117,15 +117,18 @@ export class BackendService implements OnDestroy {
   async checkBackendAvailability(currentBackendIndex: number) {
     if(!this.connectedToBackend) {
       const backendUrls = [`${environment.backEndUrl1}`, `${environment.backEndUrl2}`, `${environment.backEndUrl3}`];
-      console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
+
+      // console.log("Attempting to connect to Backend url: " + backendUrls[currentBackendIndex]);
+      console.log("Attempting to connect to Backend url: " + this.getBackendUrlByPort());
+      
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      this.configurationService.checkForAvailableBackendUrl(backendUrls[currentBackendIndex]).subscribe({
+      this.configurationService.checkForAvailableBackendUrl(this.getBackendUrlByPort()).subscribe({
         next: (res: any) => {
           if(res) {
-            this.availableBackEndUrl = backendUrls[currentBackendIndex];
-            console.log("Successfully connected to Backend url: " + backendUrls[currentBackendIndex]);
-            this.backendInfoService.setBackendUrl(backendUrls[currentBackendIndex]);
+            this.availableBackEndUrl = this.getBackendUrlByPort();
+            console.log("Successfully connected to Backend url: " + this.getBackendUrlByPort());
+            this.backendInfoService.setBackendUrl(this.getBackendUrlByPort());
             this.connectedToBackend = true;
             this.connectingToBackend = false;
             this.setConnectingStatus(false);
@@ -134,7 +137,7 @@ export class BackendService implements OnDestroy {
         },
         error: (err: any) => {
           if(currentBackendIndex+1 < backendUrls.length) {
-            console.log("Failed to connect to Backend url: " + backendUrls[currentBackendIndex]);
+            console.log("Failed to connect to Backend url: " + this.getBackendUrlByPort());
             this.checkBackendAvailability(++currentBackendIndex);
           }
           else {
@@ -147,7 +150,7 @@ export class BackendService implements OnDestroy {
   }
 
   storeBackendMessages(jsonString: string) {
-    console.log("storeBackendMessages(): " + jsonString);
+    // console.log("storeBackendMessages(): " + jsonString);
     this.updateMessagesFromBackendSubject.next(jsonString);
   }
 
@@ -201,6 +204,19 @@ export class BackendService implements OnDestroy {
         this.checkBackendAvailability(0);
       }
     });
+  }
+
+  getBackendUrlByPort(): string {
+    const currentPort = window.location.port;
+
+    if(currentPort === "4200")
+      return environment.backEndUrl1;
+    if(currentPort === "4201")
+      return environment.backEndUrl2;
+    if(currentPort === "4202")
+      return environment.backEndUrl3;
+
+    return "error";
   }
 
   getAllZnodesAndChildren(zNodes: ZNode[], backendUrl?: string) {

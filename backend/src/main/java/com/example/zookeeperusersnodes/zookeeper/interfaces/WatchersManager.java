@@ -4,7 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public interface WatchersManager {
-    void addWatcher(String path);
-    void removeWatcher(String path);
-    boolean hasWatcher(String path);
+    void addMessageWatcher(String path);
+    void removeMessageWatcher(String path);
+    boolean hasMessageWatcher(String path);
+    void addUserWatcher(String path);
+    void removeUserWatcher(String path);
+    boolean hasUserWatcher(String path);
+    void addUsersWatcher();
+    void removeUsersWatcher();
+    boolean hasUsersWatcher();
 }

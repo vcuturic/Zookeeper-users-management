@@ -4,10 +4,6 @@
   background-color: #689253; /* Green color reminiscent of Zookeeper theme */
   color: white;
 }
-  
-.main-chat-container {
-  display: flex;
-}  
 
 .user-pic {
   width: 40px;

@@ -4,10 +4,7 @@ import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/message")
@@ -20,8 +17,8 @@ public class MessageController {
 
     @LeaderOnly
     @PostMapping("/receive")
-    public ResponseEntity<ServerResponseDTO> receiveMessage(@RequestBody UserMessageDTO userMessageDTO) {
-        this.zooKeeperService.addMessageZNode(userMessageDTO.getUsername(), userMessageDTO.getMessage());
+    public ResponseEntity<ServerResponseDTO> receiveMessage(@RequestBody UserMessageDTO userMessageDTO, @RequestHeader("request-from") String requestFrom) {
+        this.zooKeeperService.addMessageZNode(userMessageDTO);
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully received message.");
 

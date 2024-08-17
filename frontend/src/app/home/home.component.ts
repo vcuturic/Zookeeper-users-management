@@ -35,6 +35,7 @@ export class HomeComponent implements OnInit, OnDestroy{
 
   zNodes: ZNode[] = [];
   allNodesChildren: ZNode[] = [];
+  personNodes: ZNode[] = [];
   private topicSubscription?: Subscription;
   private connectingToBackendSubscription: Subscription;
   private subscription?: Subscription;
@@ -75,41 +76,75 @@ export class HomeComponent implements OnInit, OnDestroy{
         this.userService.sendHeartbeat();
 
         this.backendService.getAllZnodesAndChildren(this.zNodes, url);
-        this.backendService.getAllNodesChildren(this.allNodesChildren, url);
+        // this.backendService.getAllNodesChildren(this.allNodesChildren, url);
+        this.getAllPersonNodes();
 
-        setTimeout(() => {
+
+        // setTimeout(() => {
           // console.log('This runs after the current execution context');
-          this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
-        }, 0);
+          // this.backendService.getLiveNodesChildren(this.allNodesChildren, url);
+        // }, 0);
         
-
-        if(this.initTriggered) {
-          if(this.backendService.getBackendTopicSubscription()) {
-            this.backendService.destruct();
-            console.log("Ladies and gentleman, we got them.");
-          }
-
+        if(!this.topicSubscription) {
           this.topicSubscription = this.rxStompService
             .watch(Constants.DESTINATION_ROUTE)
             .subscribe((message: Message) => {
               this.handleBackendMessages(message.body);
-          });     
-        } 
-        else {
-          // Why double CONNECT_OFFLINE
-          // Scenario:
-          // 1# Login, initTriggered == true. Some1 added an user, u handle it (line 90), but the BE-Service stores it
-          // 2# Logout
-          // 3# Login, initTriggered == false. Now u read that stored message (line 101)
-          this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
-            this.updateMessagesFromBackend = value;
-            this.handleBackendMessages(value);
-          });
+          }); 
         }
+         
+
+        // if(this.initTriggered) {
+        //   if(this.backendService.getBackendTopicSubscription()) {
+        //     this.backendService.destruct();
+        //     console.log("Ladies and gentleman, we got them.");
+        //   }
+
+        //   this.topicSubscription = this.rxStompService
+        //     .watch(Constants.DESTINATION_ROUTE)
+        //     .subscribe((message: Message) => {
+        //       this.handleBackendMessages(message.body);
+        //   });     
+        // } 
+        // else {
+        //   // Why double CONNECT_OFFLINE
+        //   // Scenario:
+        //   // 1# Login, initTriggered == true. Some1 added an user, u handle it (line 90), but the BE-Service stores it
+        //   // 2# Logout
+        //   // 3# Login, initTriggered == false. Now u read that stored message (line 101)
+        //   this.subscription = this.backendService.updateMessagesFromBackend$.subscribe(value => {
+        //     this.updateMessagesFromBackend = value;
+        //     this.handleBackendMessages(value);
+        //   });
+        // }
 
         this.loading = false;
       }
     });  
+  }
+
+  getAllPersonNodes() {
+    this.userService.getUsers().subscribe({
+      next: (res: any) => {
+        if(res) {
+          if(this.personNodes.length > 0) 
+            this.personNodes.length = 0;
+
+          res.forEach((element: any) => {
+            const newNode: ZNode = {
+              name: element.username,
+              online: element.online,
+              type: Constants.ZNODE_TYPE_USER
+            };
+
+            this.personNodes.push(newNode);
+          });
+        }
+      },
+      error: (err: any) => {
+        console.error(err);
+      }
+    });
   }
 
   unsubscribeFromBackendMessages() {
@@ -145,31 +180,39 @@ export class HomeComponent implements OnInit, OnDestroy{
 
       if(msg.operation === Constants.OPERATION_CONNECT_OFFLINE) {
           msg.zNode.online = false;
-          this.allNodesChildren.push(msg.zNode);
+          // this.allNodesChildren.push(msg.zNode);
+          this.personNodes.push(msg.zNode);
       }
       if(msg.operation === Constants.OPERATION_CONNECT_ONLINE) {
         msg.zNode.online = true;
-        this.allNodesChildren.push(msg.zNode);
+        // this.allNodesChildren.push(msg.zNode);
+        this.personNodes.push(msg.zNode);
       }
       if(msg.operation === Constants.OPERATION_RECONNECT) {
-        const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        // const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        const foundIndex = this.personNodes.findIndex(zNode => zNode.name === msg.zNode.name);
 
         if(foundIndex !== -1) {
-          this.allNodesChildren[foundIndex].online = true;
+          // this.allNodesChildren[foundIndex].online = true;
+          this.personNodes[foundIndex].online = true;
         }
       }
       if(msg.operation === Constants.OPERATION_DISCONNECT) {
-        const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        // const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        const foundIndex = this.personNodes.findIndex(zNode => zNode.name === msg.zNode.name);
 
         if(foundIndex !== -1) {
-          this.allNodesChildren[foundIndex].online = false;
+          // this.allNodesChildren[foundIndex].online = false;
+          this.personNodes[foundIndex].online = false;
         }
       }
       if(msg.operation === Constants.OPERATION_DELETE) {
-        const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        // const foundIndex = this.allNodesChildren.findIndex(zNode => zNode.name === msg.zNode.name);
+        const foundIndex = this.personNodes.findIndex(zNode => zNode.name === msg.zNode.name);
 
         if(foundIndex !== -1) {
-          this.allNodesChildren = this.allNodesChildren.filter(znode => znode.name !== msg.zNode.name);
+          // this.allNodesChildren = this.allNodesChildren.filter(znode => znode.name !== msg.zNode.name);
+          this.personNodes = this.personNodes.filter(znode => znode.name !== msg.zNode.name);
         }
       }
 
@@ -199,6 +242,6 @@ export class HomeComponent implements OnInit, OnDestroy{
   }
 
   onAllNodesChange(updatedZNodes: ZNode[]) {
-    this.allNodesChildren = updatedZNodes;
+    this.personNodes = updatedZNodes;
   }
 }

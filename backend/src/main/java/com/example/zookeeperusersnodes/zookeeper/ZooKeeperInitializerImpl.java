@@ -1,5 +1,6 @@
 package com.example.zookeeperusersnodes.zookeeper;
 
+import com.example.zookeeperusersnodes.constants.NodePaths;
 import jakarta.annotation.PostConstruct;
 import org.apache.zookeeper.*;
 import org.springframework.stereotype.Component;
@@ -25,14 +26,14 @@ public class ZooKeeperInitializerImpl implements ZooKeeperInitializer{
     }
 
     private void createInitialNodes() throws InterruptedException, KeeperException {
-        if (zooKeeper.exists("/all_nodes", false) == null)
-            zooKeeper.create("/all_nodes", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        if (zooKeeper.exists("/live_nodes", false) == null)
-            zooKeeper.create("/live_nodes", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        if (zooKeeper.exists("/election", false) == null)
-            zooKeeper.create("/election", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        if (zooKeeper.exists("/messages", false) == null)
-            zooKeeper.create("/messages", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if (zooKeeper.exists(NodePaths.ALL_NODES_PATH, false) == null)
+            zooKeeper.create(NodePaths.ALL_NODES_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if (zooKeeper.exists(NodePaths.LIVE_NODES_PATH, false) == null)
+            zooKeeper.create(NodePaths.LIVE_NODES_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if (zooKeeper.exists(NodePaths.ELECTION_PATH, false) == null)
+            zooKeeper.create(NodePaths.ELECTION_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if (zooKeeper.exists(NodePaths.USERS_PATH, false) == null)
+            zooKeeper.create(NodePaths.USERS_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
     @Override

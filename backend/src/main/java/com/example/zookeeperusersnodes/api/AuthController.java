@@ -25,7 +25,10 @@ public class AuthController {
     @LeaderOnly
     @PostMapping("/login")
     public ResponseEntity<ServerResponseDTO> Login(@RequestBody UserDTO userDTO) {
-        this.zooKeeperService.addZNode(userDTO.getUsername());
+        this.zooKeeperService.addUserZNode(userDTO, false);
+        System.out.println(userDTO.getAddress());
+
+        this.userService.getUserActivity().put(userDTO.getUsername(), System.currentTimeMillis());
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully logged in.");
 
@@ -34,13 +37,14 @@ public class AuthController {
 
     @LeaderOnly
     @PostMapping("/logout")
-    public ResponseEntity<ServerResponseDTO> Logout(@CookieValue(value = "username", defaultValue = "") String username) {
+    public ResponseEntity<ServerResponseDTO> Logout(@RequestBody String username) {
         if(username.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ServerResponseDTO("User does not exist!"));
         }
 
-        this.zooKeeperService.removeZNodeFromLiveNodes(username);
+//        this.zooKeeperService.removeZNodeFromLiveNodes(username);
+        this.zooKeeperService.logoutUser(username);
 
         this.userService.userLeft(username);
 

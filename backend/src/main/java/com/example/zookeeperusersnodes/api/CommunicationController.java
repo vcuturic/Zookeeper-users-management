@@ -1,7 +1,11 @@
 package com.example.zookeeperusersnodes.api;
 
+import com.example.zookeeperusersnodes.dto.UserDTO;
 import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
+import com.example.zookeeperusersnodes.zookeeper.DataStorage;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 // Used for communication between leader and other zookeeper nodes
 @RestController
@@ -12,5 +16,9 @@ public class CommunicationController {
     @GetMapping("/clusterInfo")
     public ClusterInfo getClusterInfo() {
         return ClusterInfo.getClusterInfo();
+    }
+    @GetMapping("/userInfo")
+    public List<UserDTO> getUserInfo() {
+        return DataStorage.getUserList();
     }
 }

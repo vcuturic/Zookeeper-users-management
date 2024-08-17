@@ -4,6 +4,7 @@ import { LoginData } from '../models/login-data';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BackendInfoService } from './backend-info.service';
 import { Subscription } from 'rxjs';
+import { User } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -33,49 +34,46 @@ export class AuthService implements OnDestroy{
 
   isAuthenticated(): boolean
   {
-    return this.cookieService.get("username") ? true : false;
+    return localStorage.getItem("username") ? true : false;
   }
 
-  login(loginData: LoginData) {
-    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, loginData);
+  login(userData: User) {
+    return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, userData);
   }
 
   deleteCookies() {
-    this.cookieService.delete("username");
+    localStorage.removeItem("username");
     this.removeUserFromList(this.username!);
   }
 
   logout() {
-    return this.http.post<any>(`${this.backendUrl}/${this.authApiUrl}/logout`, null, { withCredentials: true });
+    const username = localStorage.getItem("username");
+    return this.http.post<any>(`${this.backendUrl}/${this.authApiUrl}/logout`, username);
   }
 
   getUsername(): string {
-    return this.cookieService.get("username");
+    return localStorage.getItem("username")!;
   }
 
-  // Function to store the list in cookies
   saveListToCookies() {
-    // Convert the list to JSON and store it in a cookie named 'userList'
     this.cookieService.set('userList', JSON.stringify(this.userList));
   }
 
-  // Function to retrieve the list from cookies
   loadListFromCookies() {
-    // Retrieve the JSON string from the cookie
     const userListString = this.cookieService.get('userList');
-    // If the cookie exists and is not empty
+
     if (userListString) {
-      // Parse the JSON string back to a list of strings
       this.userList = JSON.parse(userListString);
-      console.log(this.userList);
     }
   }
 
   addUserToList(user: string) {
     this.userList.push(user);
     // this.username = user;
-    this.cookieService.set("username", user);
-    this.saveListToCookies();
+    localStorage.setItem("username", user);
+    // this.cookieService.set("username", user, { secure: true, sameSite: "Strict"  });
+    // this.cookieService.setHttpOnly(true);
+    // this.saveListToCookies();
   }
 
   removeUserFromList(username: string) {

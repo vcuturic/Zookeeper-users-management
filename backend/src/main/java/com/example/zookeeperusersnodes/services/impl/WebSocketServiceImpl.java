@@ -67,8 +67,57 @@ public class WebSocketServiceImpl implements WebSocketService {
         List<String> instancesWithoutLeader = new ArrayList<>(webSocketInstances);
         String portString = ":" + serverPort + "/";
         instancesWithoutLeader.removeIf(url -> url.contains(portString));
+        System.out.println("instancesWithoutLeader: " + instancesWithoutLeader);
+
 
         for (String wsInstance : instancesWithoutLeader) {
+            StandardWebSocketClient webSocketClient = new StandardWebSocketClient();
+
+            try {
+                WebSocketSession webSocketSession = webSocketClient.execute(
+                        new WebSocketHandler(this.notificationService, this.messageService), wsInstance).get();
+
+                String jsonMessage = objectMapper.writeValueAsString(userMessage);
+                webSocketSession.sendMessage(new TextMessage(jsonMessage));
+
+                webSocketSession.close();
+            }
+            catch (InterruptedException | ExecutionException | IOException e) {
+//                throw new RuntimeException(e);
+                // if some server is not connected, its crashing...
+            }
+        }
+    }
+
+    @Override
+    public void broadcastMessage(List<String> expectServers, UserMessageDTO userMessage) {
+        // expectServer - Address of the leader, no need to send updates to itself
+        List<String> instancesWithoutLeader = new ArrayList<>(webSocketInstances);
+        instancesWithoutLeader.removeAll(expectServers);
+        System.out.println("instancesWithoutLeader: " + instancesWithoutLeader);
+
+        for (String wsInstance : instancesWithoutLeader) {
+            StandardWebSocketClient webSocketClient = new StandardWebSocketClient();
+
+            try {
+                WebSocketSession webSocketSession = webSocketClient.execute(
+                        new WebSocketHandler(this.notificationService, this.messageService), wsInstance).get();
+
+                String jsonMessage = objectMapper.writeValueAsString(userMessage);
+                webSocketSession.sendMessage(new TextMessage(jsonMessage));
+
+                webSocketSession.close();
+            }
+            catch (InterruptedException | ExecutionException | IOException e) {
+//                throw new RuntimeException(e);
+                // if some server is not connected, its crashing...
+            }
+        }
+    }
+
+    @Override
+    public void broadcastMessageTo(List<String> toServers, UserMessageDTO userMessage) {
+        for (String wsInstance : toServers) {
             StandardWebSocketClient webSocketClient = new StandardWebSocketClient();
 
             try {

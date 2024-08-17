@@ -4,10 +4,13 @@ import com.example.zookeeperusersnodes.dto.ServerResponseDTO;
 import com.example.zookeeperusersnodes.dto.UserDTO;
 import com.example.zookeeperusersnodes.services.interfaces.UserService;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
+import com.example.zookeeperusersnodes.zookeeper.DataStorage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -15,17 +18,21 @@ public class UserController {
 
     private final UserService userService;
     private final ZooKeeperService zooKeeperService;
-    private boolean userDisconnected = true;
 
     public UserController(UserService userService, ZooKeeperService zooKeeperService) {
         this.userService = userService;
         this.zooKeeperService = zooKeeperService;
     }
 
+    @GetMapping("/getUsers")
+    public ResponseEntity<List<UserDTO>> getUsers() {
+        return new ResponseEntity<>(DataStorage.getUserList(), HttpStatus.OK);
+    }
+
     @LeaderOnly
     @PostMapping("/addUser")
     public ResponseEntity<ServerResponseDTO> addUser(@RequestBody UserDTO userDTO) {
-        this.zooKeeperService.addZNode(userDTO.getUsername(), true);
+        this.zooKeeperService.addUserZNode(userDTO, true);
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("Successfully added user " + userDTO.getUsername());
 
@@ -35,7 +42,7 @@ public class UserController {
     @LeaderOnly
     @PostMapping("/removeUser")
     public ResponseEntity<ServerResponseDTO> removeUser(@RequestParam(name = "userRemoved") String username) {
-        this.zooKeeperService.removeZNode(username);
+        this.zooKeeperService.removeUserZNode(username);
 
         ServerResponseDTO serverResponse = new ServerResponseDTO("User " + username + " removed.");
 
@@ -43,15 +50,15 @@ public class UserController {
     }
 
     @PostMapping("/heartbeat")
-    public ResponseEntity<Void> heartbeat(@CookieValue(value = "username", defaultValue = "error") String username) {
-        if(username.equals("error"))
+    public ResponseEntity<Void> heartbeat(@RequestBody String username) {
+        if(username == null || username.isEmpty())
             return ResponseEntity.badRequest().build();
         else {
-            this.userService.getUserActivity().put(username, System.currentTimeMillis());
 
-            if(userDisconnected) {
-                this.zooKeeperService.addZNode(username);
-                userDisconnected = false;
+            // if a user is disconnected, refresh it
+            if(!this.userService.getUserActivity().containsKey(username)) {
+                this.zooKeeperService.addUserZNode(new UserDTO(username), false);
+                this.userService.getUserActivity().put(username, System.currentTimeMillis());
             }
 
             return ResponseEntity.ok().build();
@@ -65,9 +72,7 @@ public class UserController {
         this.userService.getUserActivity().entrySet().removeIf(entry -> {
             boolean inactive = currentTime - entry.getValue() > 100000;
             if (inactive) {
-                System.out.println("Removing inactive user: " + entry.getKey());
-                userDisconnected = true;
-                this.zooKeeperService.removeZNodeFromLiveNodes(entry.getKey());
+                this.zooKeeperService.logoutUser(entry.getKey());
             }
             return inactive;
         });

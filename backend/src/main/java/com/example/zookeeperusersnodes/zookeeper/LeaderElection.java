@@ -3,24 +3,33 @@ import com.example.zookeeperusersnodes.constants.NodeOperations;
 import com.example.zookeeperusersnodes.constants.NodePaths;
 import com.example.zookeeperusersnodes.constants.NodeTypes;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.dto.UserDTO;
 import com.example.zookeeperusersnodes.services.interfaces.MessageService;
 import com.example.zookeeperusersnodes.services.interfaces.NotificationService;
 import com.example.zookeeperusersnodes.services.interfaces.WebSocketService;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
+import com.example.zookeeperusersnodes.utils.CommonUtils;
 import com.example.zookeeperusersnodes.zookeeper.interfaces.WatchersManager;
+import com.example.zookeeperusersnodes.zookeeper.watchers.UsersWatcher;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+
+import static com.example.zookeeperusersnodes.utils.CommonUtils.findDifferentElement;
 
 @Component
 public class LeaderElection implements Watcher {
@@ -39,6 +48,9 @@ public class LeaderElection implements Watcher {
     private RestTemplate restTemplate;
     @Autowired
     private WebSocketService webSocketService;
+    @Autowired
+    private CommonUtils commonUtils;
+    ObjectMapper objectMapper = new ObjectMapper();
 
     private final WatchersManager watcherManager;
     private final MessageService messageService;
@@ -54,7 +66,6 @@ public class LeaderElection implements Watcher {
     public void process(WatchedEvent watchedEvent) {
         if(watchedEvent.getPath().equals(ELECTION_PATH)) {
             if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
-                System.out.println("Node " +  watchedEvent.getType() + " event | " + watchedEvent.getPath());
                 try {
                     this.reevaluateLeadership();
                 }
@@ -149,13 +160,35 @@ public class LeaderElection implements Watcher {
         }
     }
 
+    public void getLatestUserInfo() {
+        try {
+            // UPDATE all nodes nad live nodes.
+            List<String> userNodes = zooKeeper.getChildren(NodePaths.USERS_PATH, false);
+            DataStorage.getUserList().clear();
+
+            for (String userName : userNodes) {
+                String childPath = NodePaths.USERS_PATH + "/" + userName;
+
+                byte[] data = zooKeeper.getData(childPath, false, null);
+
+                String userString = new String(data);
+
+                UserDTO userDTO = objectMapper.readValue(userString, UserDTO.class);
+
+                DataStorage.getUserList().add(userDTO);
+            }
+        }
+        catch (KeeperException | InterruptedException | JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void reevaluateLeadership() throws InterruptedException, KeeperException {
         // TODO reelection to be only called when an leader disconnects
         List<String> children = zooKeeper.getChildren(ELECTION_PATH, false);
 
         if(children.isEmpty()) {
             // No more leaders, server shutting down
-            System.out.println("Shutting down...");
             this.onServerDisconnect();
         }
         else {
@@ -165,16 +198,25 @@ public class LeaderElection implements Watcher {
                 System.out.println("I am the leader! " + currentZNode);
 
                 this.getLatestClusterInfo();
+                this.getLatestUserInfo();
                 // CurrentZNode is the leader, add its Watcher() to /all_nodes and /live_nodes
                 zooKeeper.addWatch(ALL_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 zooKeeper.addWatch(LIVE_NODES_PATH, this, AddWatchMode.PERSISTENT);
                 ClusterInfo.getClusterInfo().setLeaderNode(currentZNode);
                 ClusterInfo.getClusterInfo().setLeaderAddress(getServerInfo());
 
-                Messenger messenger = new Messenger(zooKeeper, watcherManager, messageService, zooKeeperService, webSocketService);
+                // Problems: whenever a new instance connects Messenger and UsersWatcher got a new instance
+                Messenger messenger = new Messenger(zooKeeper, watcherManager, messageService, zooKeeperService, webSocketService, commonUtils);
                 messenger.init();
 
-            } else {
+                if(!watcherManager.hasUsersWatcher()) {
+                    watcherManager.addUsersWatcher();
+                    UsersWatcher usersWatcher = new UsersWatcher(zooKeeperService, zooKeeper, notificationService, webSocketService, watcherManager);
+                    usersWatcher.init();
+                }
+
+            }
+            else {
                 System.out.println("I am not the leader." + currentZNode);
                 ClusterInfo.getClusterInfo().setLeaderNode(ELECTION_PATH + "/" + children.getFirst());
                 // TODO We need to get serverInfo from the leader node and set it here, that's why we are
@@ -183,12 +225,27 @@ public class LeaderElection implements Watcher {
                 Stat stat = zooKeeper.exists(leaderPath, true);
                 byte[] data = zooKeeper.getData(leaderPath, false, stat);
                 String leaderAddress = new String(data);
-                System.out.println("New Leader:  " + leaderPath + leaderAddress);
+//                System.out.println("New Leader:  " + leaderPath + leaderAddress);
                 ClusterInfo.getClusterInfo().setLeaderAddress(leaderAddress);
                 // TODO Communication with leader node (one route should be this zNode asking for update from leader)
                 // for ex. This zNode connected later, and don't have the relevant data
-                String url = "http://" + leaderAddress + "/comm/clusterInfo"; // URL of ServiceA
-                ClusterInfo.updateClusterInfo(Objects.requireNonNull(restTemplate.getForObject(url, ClusterInfo.class)));
+                String clusterInfoUrl = "http://" + leaderAddress + "/comm/clusterInfo"; // URL of ServiceA
+                ClusterInfo.updateClusterInfo(Objects.requireNonNull(restTemplate.getForObject(clusterInfoUrl, ClusterInfo.class)));
+
+                // Get Newest personInfo
+                String userInfoUrl = "http://" + leaderAddress + "/comm/userInfo"; // URL of ServiceA
+                ResponseEntity<List<UserDTO>> responseEntity = restTemplate.exchange(
+                        userInfoUrl,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<UserDTO>>() {}
+                );
+
+                List<UserDTO> userList = responseEntity.getBody();
+
+                if (userList != null) {
+                    DataStorage.updateUserList(userList);
+                }
             }
 
             // Whether the node is leader or not, add it to /all_nodes and /live_nodes
@@ -280,7 +337,7 @@ public class LeaderElection implements Watcher {
             }
             else {
                 // The current node is in all_nodes and in /live_nodes, probably reelection
-                System.out.println("Hello");
+                System.out.println(" ");
             }
 //            this.getLatestClusterInfo();
         }
@@ -301,19 +358,5 @@ public class LeaderElection implements Watcher {
         return address != null ? address + ":" + serverPort : null;
     }
 
-    public static String findDifferentElement(List<String> list1, List<String> list2) {
-        // TODO There is some bug here, when an user is added it says no unique 1 user
-        // TODO we cant add more, just 1 at a time
-        // KADA SE OBRISE USER, NE AZURIRA SE ClusterInfo!!
 
-        List<String> copyOfList1 = new ArrayList<>(list1);
-
-        copyOfList1.removeAll(list2);
-
-        if (copyOfList1.size() == 1) {
-            return copyOfList1.getFirst();
-        } else {
-            throw new IllegalStateException("There is no unique different element.");
-        }
-    }
 }

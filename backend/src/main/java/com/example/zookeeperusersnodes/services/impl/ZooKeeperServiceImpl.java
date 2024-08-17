@@ -3,17 +3,23 @@ package com.example.zookeeperusersnodes.services.impl;
 import com.example.zookeeperusersnodes.constants.NodePaths;
 import com.example.zookeeperusersnodes.constants.NodeTypes;
 import com.example.zookeeperusersnodes.dto.NodeDTO;
+import com.example.zookeeperusersnodes.dto.UserDTO;
+import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import com.example.zookeeperusersnodes.utils.IPAddressChecker;
 import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
 import com.example.zookeeperusersnodes.zookeeper.ZooKeeperInitializer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +32,7 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
     @Autowired
     private ZooKeeperInitializer zooKeeperInitializer;
     private final ZooKeeper zooKeeper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ZooKeeperServiceImpl(ZooKeeperInitializer zooKeeperInitializer) {
         this.zooKeeper = zooKeeperInitializer.getZooKeeperInstance();
@@ -125,6 +132,8 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
         }
     }
 
+
+
     @Override
     public void addZNode(String username, boolean userAdded) {
         String newNodeName = "/" + username;
@@ -146,6 +155,10 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
 //            throw new RuntimeException(e);
         }
     }
+
+
+
+
 
     @Override
     public void removeZNodeFromLiveNodes(String username) {
@@ -186,6 +199,78 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
     }
 
     @Override
+    public void removeUserZNode(String username) {
+        String newNodeName = "/" + username;
+
+        try {
+            if(zooKeeper.exists(NodePaths.USERS_PATH + newNodeName, false) != null) {
+                List<String> children = zooKeeper.getChildren(NodePaths.USERS_PATH + newNodeName, true);
+
+                if(children.isEmpty())
+                    zooKeeper.delete(NodePaths.USERS_PATH + newNodeName, -1);
+                else {
+                    for (String child : children) {
+                        String childPath = NodePaths.USERS_PATH + newNodeName + "/" + child;
+                        zooKeeper.delete(childPath, -1);
+                    }
+                }
+            }
+        }
+        catch (KeeperException | InterruptedException e) {
+//            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void addUserZNode(UserDTO userDTO, boolean userAdded) {
+        String absoluteNodePath = NodePaths.USERS_PATH + "/" + userDTO.getUsername();
+        Stat stat;
+
+        try {
+            if((stat = zooKeeper.exists(absoluteNodePath, false)) == null) {
+                String jsonString = objectMapper.writeValueAsString(userDTO);
+
+                byte[] userData = jsonString.getBytes();
+
+                zooKeeper.create(absoluteNodePath, userData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+            else {
+                // reconnected
+                userDTO.setOnline(true);
+
+                byte[] updatedUserData = objectMapper.writeValueAsBytes(userDTO);
+
+                zooKeeper.setData(absoluteNodePath, updatedUserData, stat.getVersion());
+            }
+        }
+        catch (KeeperException | InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void logoutUser(String username) {
+        String absoluteNodePath = NodePaths.USERS_PATH + "/" + username;
+
+        try {
+            Stat stat = zooKeeper.exists(absoluteNodePath, false);
+
+            byte[] userData = zooKeeper.getData(absoluteNodePath, false, stat);
+
+            UserDTO userDTO = objectMapper.readValue(userData, UserDTO.class);
+
+            userDTO.setOnline(false);
+
+            byte[] updatedUserData = objectMapper.writeValueAsBytes(userDTO);
+
+            zooKeeper.setData(absoluteNodePath, updatedUserData, stat.getVersion());
+        }
+        catch (KeeperException | InterruptedException | IOException e) {
+//            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addMessageZNode(String username, String message) {
         String newNodeName = "/" + username;
 
@@ -195,12 +280,44 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
                 zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
+            // MESSAGE will have: { From: username, Text: text }
+            // if "From" is null then it is a global message
             zooKeeper.create(NodePaths.ALL_NODES_PATH + newNodeName + "/message-", message.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
         }
         catch (KeeperException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public void addMessageZNode(UserMessageDTO userMessageDTO) {
+        // Scenario: Zika sends Pera message:
+        // { From: "Zika", To: "Pera",  "De si pero" }
+        // This needed to be created in both /users/pera and /users/zika
+
+        String senderName = "/" + userMessageDTO.getFrom();
+        String receiverName = "/" + userMessageDTO.getTo();
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(userMessageDTO);
+            byte[] messageData = jsonString.getBytes();
+
+            // # If the user does not exist? This should be error, because logged user exist...
+//            if(zooKeeper.exists(NodePaths.USERS_PATH + newNodeName, false) == null) {
+//                zooKeeper.create(NodePaths.USERS_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+//            }
+
+            // If user already sent some messages we create only its children with new messages
+            // MESSAGE will have: { From: username, Text: text }
+            // if "From" is null then it is a global message
+            zooKeeper.create(NodePaths.USERS_PATH + senderName + "/message-", messageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            zooKeeper.create(NodePaths.USERS_PATH + receiverName + "/message-", messageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+        }
+        catch (KeeperException | InterruptedException | JsonProcessingException e) {
+//            throw new RuntimeException(e);
+        }
     }
 
     public void populateZookeeperNodes(String path, List<NodeDTO> parentsChildren) {
