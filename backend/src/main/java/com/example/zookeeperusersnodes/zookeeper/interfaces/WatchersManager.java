@@ -13,4 +13,8 @@ public interface WatchersManager {
     void addUsersWatcher();
     void removeUsersWatcher();
     boolean hasUsersWatcher();
+
+    void addMessagesWatcher();
+    void removeMessagesWatcher();
+    boolean hasMessagesWatcher();
 }

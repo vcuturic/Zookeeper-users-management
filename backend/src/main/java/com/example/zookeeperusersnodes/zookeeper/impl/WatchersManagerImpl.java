@@ -1,9 +1,7 @@
 package com.example.zookeeperusersnodes.zookeeper.impl;
 import com.example.zookeeperusersnodes.zookeeper.interfaces.WatchersManager;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /*
@@ -14,6 +12,7 @@ public class WatchersManagerImpl implements WatchersManager {
     private final Set<String> watchedUserMessagesNodes;
     private final Set<String> watchedUserNodes;
     private boolean usersNodeWatched;
+    private boolean usersMessengerSet;
 
     public WatchersManagerImpl(Set<String> watchedUserMessagesNodes, Set<String> watchedUserNodes) {
         this.watchedUserMessagesNodes = watchedUserMessagesNodes;
@@ -64,5 +63,20 @@ public class WatchersManagerImpl implements WatchersManager {
     @Override
     public boolean hasUsersWatcher() {
         return usersNodeWatched;
+    }
+
+    @Override
+    public void addMessagesWatcher() {
+        usersMessengerSet = true;
+    }
+
+    @Override
+    public void removeMessagesWatcher() {
+        usersMessengerSet = false;
+    }
+
+    @Override
+    public boolean hasMessagesWatcher() {
+        return usersMessengerSet;
     }
 }

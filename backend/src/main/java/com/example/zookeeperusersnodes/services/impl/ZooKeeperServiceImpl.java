@@ -8,6 +8,7 @@ import com.example.zookeeperusersnodes.dto.UserMessageDTO;
 import com.example.zookeeperusersnodes.services.interfaces.ZooKeeperService;
 import com.example.zookeeperusersnodes.utils.IPAddressChecker;
 import com.example.zookeeperusersnodes.zookeeper.ClusterInfo;
+import com.example.zookeeperusersnodes.zookeeper.DataStorage;
 import com.example.zookeeperusersnodes.zookeeper.ZooKeeperInitializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -292,10 +293,6 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
 
     @Override
     public void addMessageZNode(UserMessageDTO userMessageDTO) {
-        // Scenario: Zika sends Pera message:
-        // { From: "Zika", To: "Pera",  "De si pero" }
-        // This needed to be created in both /users/pera and /users/zika
-
         String senderName = "/" + userMessageDTO.getFrom();
         String receiverName = "/" + userMessageDTO.getTo();
 
@@ -307,16 +304,29 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
             String silentMessageString = objectMapper.writeValueAsString(userMessageDTO);
             byte[] silentMessageData = silentMessageString.getBytes();
 
-            // # If the user does not exist? This should be error, because logged user exist...
-//            if(zooKeeper.exists(NodePaths.USERS_PATH + newNodeName, false) == null) {
-//                zooKeeper.create(NodePaths.USERS_PATH + newNodeName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-//            }
+            if(senderName.equals(receiverName)) {
+                // It is a global message
+                System.out.println("GLOBAL MESSAGE!");
+                boolean watcherTriggered = false;
 
-            // If user already sent some messages we create only its children with new messages
-            // MESSAGE will have: { From: username, Text: text }
-            // if "From" is null then it is a global message
-            zooKeeper.create(NodePaths.USERS_PATH + senderName + "/message-", silentMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            zooKeeper.create(NodePaths.USERS_PATH + receiverName + "/message-", triggerMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                // Send message to all users
+                System.out.println(UserDTO.getUsernames(DataStorage.getUserList()));
+
+                for (UserDTO user : DataStorage.getUserList()) {
+                    if(!watcherTriggered) {
+                        zooKeeper.create(NodePaths.USERS_PATH + "/" + user.getUsername() + "/message-", triggerMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                        watcherTriggered = true;
+                    }
+                    else {
+                        zooKeeper.create(NodePaths.USERS_PATH + "/" + user.getUsername() + "/message-", silentMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                    }
+                }
+            }
+            else {
+                // Private
+                zooKeeper.create(NodePaths.USERS_PATH + senderName + "/message-", silentMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                zooKeeper.create(NodePaths.USERS_PATH + receiverName + "/message-", triggerMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            }
         }
         catch (KeeperException | InterruptedException | JsonProcessingException e) {
 //            throw new RuntimeException(e);

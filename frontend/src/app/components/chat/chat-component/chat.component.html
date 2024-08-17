@@ -9,7 +9,8 @@
   </div>
   <div class="col chat-content">
     <div class="messages flex w-30rem">
-      <div *ngFor="let message of messages$ | async" [ngClass]="{'my-message': message.from === username, 'other-message': message.from !== username}">
+      <div *ngFor="let message of messagesMap[selectedUser === '' ? username : selectedUser]" 
+           [ngClass]="{'my-message': message.from === username, 'other-message': message.from !== username}">
         <strong>{{ message.from }}:</strong> {{ message.text }}
       </div>
     </div>

@@ -75,14 +75,28 @@ public class MessageWatcher implements Watcher {
                     System.out.println("[debug]: MessageWatcher: senderWebSocketInstance: " + senderWebSocketInstance);
                     System.out.println("[debug]: MessageWatcher: receiverWebSocketInstance: " + receiverWebSocketInstance);
 
-                    // redo: only 1 message at a time so
-                    if(senderWebSocketInstance.equals(currentWebSocketInstance) || receiverWebSocketInstance.equals(currentWebSocketInstance)) {
+                    if(senderAddress.equals(receiverAddress)) {
+                        // Global message
+                        expectServers.add(currentWebSocketInstance);
                         this.messageService.sendMessage(userMessage); // This sends message from current webSocket
+                        this.webSocketService.broadcastMessage(expectServers, userMessage);
                     }
                     else {
-                        sendToServers.add(receiverWebSocketInstance);
-                        sendToServers.add(senderWebSocketInstance);
-                        this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
+                        // Private message
+                        if(senderWebSocketInstance.equals(currentWebSocketInstance) || receiverWebSocketInstance.equals(currentWebSocketInstance)) {
+                            if(senderWebSocketInstance.equals(currentWebSocketInstance))
+                                sendToServers.add(receiverWebSocketInstance);
+                            else
+                                sendToServers.add(senderWebSocketInstance);
+
+                            this.messageService.sendMessage(userMessage); // This sends message from current webSocket
+                            this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
+                        }
+                        else {
+                            sendToServers.add(receiverWebSocketInstance);
+                            sendToServers.add(senderWebSocketInstance);
+                            this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
+                        }
                     }
                 }
 

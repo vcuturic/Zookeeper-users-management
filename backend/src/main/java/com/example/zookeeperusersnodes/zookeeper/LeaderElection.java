@@ -88,8 +88,8 @@ public class LeaderElection implements Watcher {
 
                             ClusterInfo.getClusterInfo().getAllNodes().add(newChild);
 
-                            this.notificationService.nodeConnectedOfflineNotification(newChild, nodeType);
-                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT_OFFLINE));
+//                            this.notificationService.nodeConnectedOfflineNotification(newChild, nodeType);
+//                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(newChild, nodeType, NodeOperations.OPERATION_CONNECT_OFFLINE));
                         }
                         else {
                             // Deletion occurred
@@ -97,8 +97,8 @@ public class LeaderElection implements Watcher {
 
                             ClusterInfo.getClusterInfo().getAllNodes().remove(deletedChild);
 
-                            this.notificationService.nodeDeletedNotification(deletedChild);
-                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(deletedChild, NodeOperations.OPERATION_DELETE));
+//                            this.notificationService.nodeDeletedNotification(deletedChild);
+//                            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(deletedChild, NodeOperations.OPERATION_DELETE));
                         }
                     }
                     catch (KeeperException | InterruptedException e) {
@@ -206,8 +206,11 @@ public class LeaderElection implements Watcher {
                 ClusterInfo.getClusterInfo().setLeaderAddress(getServerInfo());
 
                 // Problems: whenever a new instance connects Messenger and UsersWatcher got a new instance
-                Messenger messenger = new Messenger(zooKeeper, watcherManager, messageService, zooKeeperService, webSocketService, commonUtils);
-                messenger.init();
+//                if(!watcherManager.hasMessagesWatcher()) {
+//                    watcherManager.addMessagesWatcher();
+                    Messenger messenger = new Messenger(zooKeeper, watcherManager, messageService, zooKeeperService, webSocketService, commonUtils);
+                    messenger.init();
+//                }
 
                 if(!watcherManager.hasUsersWatcher()) {
                     watcherManager.addUsersWatcher();
@@ -295,14 +298,14 @@ public class LeaderElection implements Watcher {
             Iterator<String> iterator = currentChildren.iterator();
             String addedNode = iterator.hasNext() ? iterator.next() : null;
 
-            if(ClusterInfo.getClusterInfo().getAllNodes().contains(addedNode)) {
-                this.notificationService.nodeReconnectedNotification(addedNode);
-                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
-            }
-            else {
-                this.notificationService.nodeConnectedOnlineNotification(addedNode);
-                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_CONNECT_ONLINE));
-            }
+//            if(ClusterInfo.getClusterInfo().getAllNodes().contains(addedNode)) {
+//                this.notificationService.nodeReconnectedNotification(addedNode);
+//                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_RECONNECT));
+//            }
+//            else {
+//                this.notificationService.nodeConnectedOnlineNotification(addedNode);
+//                this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(addedNode, getNodeType(addedNode), NodeOperations.OPERATION_CONNECT_ONLINE));
+//            }
 
             ClusterInfo.getClusterInfo().getLiveNodes().clear();
             ClusterInfo.getClusterInfo().getLiveNodes().addAll(children);
@@ -314,8 +317,8 @@ public class LeaderElection implements Watcher {
             Iterator<String> iterator = previousChildren.iterator();
             String disconnectedNode = iterator.hasNext() ? iterator.next() : null;
 
-            this.notificationService.nodeDisconnectedNotification(disconnectedNode);
-            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(disconnectedNode, getNodeType(disconnectedNode), NodeOperations.OPERATION_DISCONNECT));
+//            this.notificationService.nodeDisconnectedNotification(disconnectedNode);
+//            this.webSocketService.broadcast(ClusterInfo.getClusterInfo().getLeaderAddress(), new NodeDTO(disconnectedNode, getNodeType(disconnectedNode), NodeOperations.OPERATION_DISCONNECT));
 
             ClusterInfo.getClusterInfo().setLiveNodes(children);
         }

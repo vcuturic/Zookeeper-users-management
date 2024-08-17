@@ -28,7 +28,6 @@ export class MessagingService {
     this.rxStompService.watch('/topic/messages').subscribe((message) => {
       const parsedMessage: UserMessage = JSON.parse(message.body);
       const currentMessages = this.messagesSubject.getValue();
-      console.log(parsedMessage);
       this.messagesSubject.next([...currentMessages, parsedMessage]);
     });
   }
