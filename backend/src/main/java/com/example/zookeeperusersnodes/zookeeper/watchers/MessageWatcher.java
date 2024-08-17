@@ -53,46 +53,60 @@ public class MessageWatcher implements Watcher {
 
                 UserMessageDTO userMessage = objectMapper.readValue(message, UserMessageDTO.class);
 
-                List<String> expectServers = new ArrayList<>();
-                List<String> sendToServers = new ArrayList<>();
+                if(!userMessage.isRead()) {
+                    List<String> expectServers = new ArrayList<>();
+                    List<String> sendToServers = new ArrayList<>();
 
-                System.out.println("[debug]: MessageWatcher: DataStorage users: ");
-                System.out.println(UserDTO.getUsernames(DataStorage.getUserList()));
+                    System.out.println("[debug]: MessageWatcher: DataStorage users: ");
+                    System.out.println(UserDTO.getUsernames(DataStorage.getUserList()));
 
-                String currentWebSocketInstance = this.commonUtils.getCurrentWebSocketInstance();
-                System.out.println("[debug]: MessageWatcher: currentWebSocketInstance: " + currentWebSocketInstance);
+                    String currentWebSocketInstance = this.commonUtils.getCurrentWebSocketInstance();
+                    System.out.println("[debug]: MessageWatcher: currentWebSocketInstance: " + currentWebSocketInstance);
 
-                String senderAddress = DataStorage.getUser(userMessage.getFrom()).getAddress();
-                String receiverAddress = DataStorage.getUser(userMessage.getTo()).getAddress();
+                    String senderAddress = DataStorage.getUser(userMessage.getFrom()).getAddress();
+                    String receiverAddress = DataStorage.getUser(userMessage.getTo()).getAddress();
 
-                System.out.println("[debug]: MessageWatcher: senderAddress: " + senderAddress);
-                System.out.println("[debug]: MessageWatcher: receiverAddress: " + receiverAddress);
+                    System.out.println("[debug]: MessageWatcher: senderAddress: " + senderAddress);
+                    System.out.println("[debug]: MessageWatcher: receiverAddress: " + receiverAddress);
 
-                String senderWebSocketInstance = commonUtils.getWebSocketInstanceByFrontendAddress(senderAddress);
-                String receiverWebSocketInstance = commonUtils.getWebSocketInstanceByFrontendAddress(receiverAddress);
+                    String senderWebSocketInstance = commonUtils.getWebSocketInstanceByFrontendAddress(senderAddress);
+                    String receiverWebSocketInstance = commonUtils.getWebSocketInstanceByFrontendAddress(receiverAddress);
 
-                System.out.println("[debug]: MessageWatcher: senderWebSocketInstance: " + senderWebSocketInstance);
-                System.out.println("[debug]: MessageWatcher: receiverWebSocketInstance: " + receiverWebSocketInstance);
+                    System.out.println("[debug]: MessageWatcher: senderWebSocketInstance: " + senderWebSocketInstance);
+                    System.out.println("[debug]: MessageWatcher: receiverWebSocketInstance: " + receiverWebSocketInstance);
+
+                    // redo: only 1 message at a time so
+                    if(senderWebSocketInstance.equals(currentWebSocketInstance) || receiverWebSocketInstance.equals(currentWebSocketInstance)) {
+                        this.messageService.sendMessage(userMessage); // This sends message from current webSocket
+                    }
+                    else {
+                        sendToServers.add(receiverWebSocketInstance);
+                        sendToServers.add(senderWebSocketInstance);
+                        this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
+                    }
+                }
+
+
 
                 // Scenario: Leader is 9091, Pera and Zika are on 9090 and 9092 respective --> broadcast with exception to 9091
-                if(!senderWebSocketInstance.equals(currentWebSocketInstance) && !receiverWebSocketInstance.equals(currentWebSocketInstance)) {
-                    expectServers.add(currentWebSocketInstance);
-                    this.webSocketService.broadcastMessage(expectServers, userMessage);
-                }
-                else {
-                    /* Scenario #2: Sender or receiver is connected to Leader node (for example Pera 9090 and Mika 9091(Leader)) --> broadcast except for 9091 and 9092 */
-                    if(senderWebSocketInstance.equals(currentWebSocketInstance)) {
-                        sendToServers.add(receiverWebSocketInstance);
-                    }
-                    if(receiverWebSocketInstance.equals(currentWebSocketInstance)) {
-                        sendToServers.add(senderWebSocketInstance);
-                    }
-
-                    System.out.println(userPath + " New MESSAGE: " + userMessage.getText());
-
-                    this.messageService.sendMessage(userMessage); // This sends message from current webSocket
-                    this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
-                }
+//                if(!senderWebSocketInstance.equals(currentWebSocketInstance) && !receiverWebSocketInstance.equals(currentWebSocketInstance)) {
+//                    expectServers.add(currentWebSocketInstance);
+//                    this.webSocketService.broadcastMessage(expectServers, userMessage);
+//                }
+//                else {
+//                    /* Scenario #2: Sender or receiver is connected to Leader node (for example Pera 9090 and Mika 9091(Leader)) --> broadcast except for 9091 and 9092 */
+//                    if(senderWebSocketInstance.equals(currentWebSocketInstance)) {
+//                        sendToServers.add(receiverWebSocketInstance);
+//                    }
+//                    if(receiverWebSocketInstance.equals(currentWebSocketInstance)) {
+//                        sendToServers.add(senderWebSocketInstance);
+//                    }
+//
+//                    System.out.println(userPath + " New MESSAGE: " + userMessage.getText());
+//
+//                    this.messageService.sendMessage(userMessage); // This sends message from current webSocket
+//                    this.webSocketService.broadcastMessageTo(sendToServers, userMessage);
+//                }
             }
             catch (KeeperException | InterruptedException | JsonProcessingException e) {
 //                    throw new RuntimeException(e);

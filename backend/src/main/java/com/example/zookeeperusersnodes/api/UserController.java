@@ -50,15 +50,15 @@ public class UserController {
     }
 
     @PostMapping("/heartbeat")
-    public ResponseEntity<Void> heartbeat(@RequestBody String username) {
-        if(username == null || username.isEmpty())
+    public ResponseEntity<Void> heartbeat(@RequestBody UserDTO userDTO) {
+        if(userDTO.getUsername() == null || userDTO.getUsername().isEmpty())
             return ResponseEntity.badRequest().build();
         else {
 
             // if a user is disconnected, refresh it
-            if(!this.userService.getUserActivity().containsKey(username)) {
-                this.zooKeeperService.addUserZNode(new UserDTO(username), false);
-                this.userService.getUserActivity().put(username, System.currentTimeMillis());
+            if(!this.userService.getUserActivity().containsKey(userDTO.getUsername())) {
+                this.zooKeeperService.addUserZNode(userDTO, false);
+                this.userService.getUserActivity().put(userDTO.getUsername(), System.currentTimeMillis());
             }
 
             return ResponseEntity.ok().build();

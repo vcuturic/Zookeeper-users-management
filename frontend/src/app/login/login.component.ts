@@ -69,9 +69,6 @@ export class LoginComponent implements OnInit, OnDestroy{
     userData.online = true;  
     userData.address = window.location.origin; 
 
-    console.log("userData: ");
-    console.log(userData);
-
     this.authService.login(userData).subscribe({
       next: (res: any) => {
         if(res) {
@@ -86,6 +83,7 @@ export class LoginComponent implements OnInit, OnDestroy{
       }
       
     })
-    this.authService.addUserToList(username);
+
+    this.authService.setUserData(userData);
   }
 }

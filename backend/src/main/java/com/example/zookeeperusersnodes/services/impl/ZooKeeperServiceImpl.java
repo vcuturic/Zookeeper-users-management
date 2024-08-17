@@ -300,9 +300,12 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
         String receiverName = "/" + userMessageDTO.getTo();
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonString = objectMapper.writeValueAsString(userMessageDTO);
-            byte[] messageData = jsonString.getBytes();
+            String triggerMessageString = objectMapper.writeValueAsString(userMessageDTO);
+            byte[] triggerMessageData = triggerMessageString.getBytes();
+
+            userMessageDTO.setRead(true);
+            String silentMessageString = objectMapper.writeValueAsString(userMessageDTO);
+            byte[] silentMessageData = silentMessageString.getBytes();
 
             // # If the user does not exist? This should be error, because logged user exist...
 //            if(zooKeeper.exists(NodePaths.USERS_PATH + newNodeName, false) == null) {
@@ -312,8 +315,8 @@ public class ZooKeeperServiceImpl implements ZooKeeperService {
             // If user already sent some messages we create only its children with new messages
             // MESSAGE will have: { From: username, Text: text }
             // if "From" is null then it is a global message
-            zooKeeper.create(NodePaths.USERS_PATH + senderName + "/message-", messageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            zooKeeper.create(NodePaths.USERS_PATH + receiverName + "/message-", messageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            zooKeeper.create(NodePaths.USERS_PATH + senderName + "/message-", silentMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            zooKeeper.create(NodePaths.USERS_PATH + receiverName + "/message-", triggerMessageData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
         }
         catch (KeeperException | InterruptedException | JsonProcessingException e) {
 //            throw new RuntimeException(e);

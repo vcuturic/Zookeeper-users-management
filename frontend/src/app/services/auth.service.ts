@@ -32,18 +32,18 @@ export class AuthService implements OnDestroy{
     this.subscription.unsubscribe();
   }
 
-  isAuthenticated(): boolean
-  {
+  isAuthenticated(): boolean {
     return localStorage.getItem("username") ? true : false;
   }
 
   login(userData: User) {
+    this.setUserData(userData);
     return this.http.post<LoginData>(`${this.backendUrl}/${this.authApiUrl}/login`, userData);
   }
 
   deleteCookies() {
     localStorage.removeItem("username");
-    this.removeUserFromList(this.username!);
+    localStorage.removeItem("userData");
   }
 
   logout() {
@@ -55,45 +55,13 @@ export class AuthService implements OnDestroy{
     return localStorage.getItem("username")!;
   }
 
-  saveListToCookies() {
-    this.cookieService.set('userList', JSON.stringify(this.userList));
+  setUserData(userData: User) {
+    localStorage.setItem("username", userData.username);
+    localStorage.setItem("userData", JSON.stringify(userData));
   }
 
-  loadListFromCookies() {
-    const userListString = this.cookieService.get('userList');
-
-    if (userListString) {
-      this.userList = JSON.parse(userListString);
-    }
-  }
-
-  addUserToList(user: string) {
-    this.userList.push(user);
-    // this.username = user;
-    localStorage.setItem("username", user);
-    // this.cookieService.set("username", user, { secure: true, sameSite: "Strict"  });
-    // this.cookieService.setHttpOnly(true);
-    // this.saveListToCookies();
-  }
-
-  removeUserFromList(username: string) {
-    const index = this.userList.indexOf(username);
-    if (index !== -1) {
-        this.userList.splice(index, 1);
-        this.saveListToCookies();
-    }
-  }
-
-  isUserInList(username?: string): boolean {
-    if(!username)
-      return false;
-
-    const index = this.userList.indexOf(username);
-
-    if (index !== -1) {
-        return true;
-    }
-
-    return false;
+  getUserData(): User {
+    const userData: User = JSON.parse(localStorage.getItem("userData")!);
+    return userData;
   }
 }

@@ -4,6 +4,7 @@ public class UserMessageDTO {
     private String from;
     private String to;
     private String text;
+    private boolean read = false;
 
     public UserMessageDTO(String from, String to, String text) {
         this.from = from;
@@ -42,5 +43,13 @@ public class UserMessageDTO {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean sent) {
+        this.read = sent;
     }
 }

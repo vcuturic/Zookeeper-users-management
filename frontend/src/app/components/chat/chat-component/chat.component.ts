@@ -40,7 +40,7 @@ export class ChatComponent {
   sendMessage() {
     if (this.messageContent.trim()) {
       // this.chatService.sendMessage(this.messageContent);
-      const userMessage: UserMessage = {from: this.authService.getUsername(), to: this.selectedUser, text: this.messageContent};
+      const userMessage: UserMessage = {from: this.authService.getUsername(), to: this.selectedUser, text: this.messageContent, read: false};
       
       this.messageService.sendMessage(userMessage).subscribe({
         next: (res: any) => {

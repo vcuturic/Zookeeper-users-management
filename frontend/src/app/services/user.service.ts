@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BackendInfoService } from './backend-info.service';
 import { LoginData } from '../models/login-data';
+import { User } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -36,8 +37,8 @@ export class UserService {
   }
 
   sendHeartbeat() {
-    const username = localStorage.getItem("username");
-    this.http.post(`${this.backendUrl}/${this.userApiUrl}/heartbeat`, username).subscribe();
+    const userData: User = JSON.parse(localStorage.getItem("userData")!);
+    this.http.post(`${this.backendUrl}/${this.userApiUrl}/heartbeat`, userData).subscribe();
   }
 
   stopHeartbeat() {
