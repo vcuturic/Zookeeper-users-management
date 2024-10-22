@@ -67,6 +67,7 @@ public class LeaderElection implements Watcher {
         if(watchedEvent.getPath().equals(ELECTION_PATH)) {
             if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
                 try {
+                    System.out.println("LE process(): " + watchedEvent.getPath());
                     this.reevaluateLeadership();
                 }
                 catch (InterruptedException | KeeperException e) {
@@ -235,6 +236,8 @@ public class LeaderElection implements Watcher {
                 String clusterInfoUrl = "http://" + leaderAddress + "/comm/clusterInfo"; // URL of ServiceA
                 ClusterInfo.updateClusterInfo(Objects.requireNonNull(restTemplate.getForObject(clusterInfoUrl, ClusterInfo.class)));
 
+                System.out.println("[debug]: leaderAddress: " + leaderAddress);
+
                 // Get Newest personInfo
                 String userInfoUrl = "http://" + leaderAddress + "/comm/userInfo"; // URL of ServiceA
                 ResponseEntity<List<UserDTO>> responseEntity = restTemplate.exchange(
@@ -246,8 +249,16 @@ public class LeaderElection implements Watcher {
 
                 List<UserDTO> userList = responseEntity.getBody();
 
-                if (userList != null) {
+                System.out.println("[debug]: afterElection (DataStorage): ");
+                System.out.println(UserDTO.getUsernames(DataStorage.getUserList()));
+                System.out.println("[debug]: afterElection (from leader): ");
+                System.out.println(UserDTO.getUsernames(userList));
+
+                if (!userList.isEmpty()) {
                     DataStorage.updateUserList(userList);
+                }
+                else {
+                    System.out.println("NO USER LIST!");
                 }
             }
 

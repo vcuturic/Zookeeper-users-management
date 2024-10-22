@@ -96,13 +96,13 @@ export class BackendService implements OnDestroy {
       // }
     });
 
-    // if(!this.topicSubscription) {
-    //   this.topicSubscription = this.rxStompService
-    //     .watch(Constants.DESTINATION_ROUTE)
-    //     .subscribe((message: Message) => {
-    //       this.storeBackendMessages(message.body);
-    //   });
-    // }
+    if(!this.topicSubscription) {
+      this.topicSubscription = this.rxStompService
+        .watch(Constants.DESTINATION_ROUTE)
+        .subscribe((message: Message) => {
+          this.storeBackendMessages(message.body);
+      });
+    }
   }
 
   destruct() {

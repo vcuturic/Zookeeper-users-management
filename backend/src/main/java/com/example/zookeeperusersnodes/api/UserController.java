@@ -65,14 +65,15 @@ public class UserController {
         }
     }
 
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 1000000)
     public void checkInactiveUsers() {
         long currentTime = System.currentTimeMillis();
 
         this.userService.getUserActivity().entrySet().removeIf(entry -> {
-            boolean inactive = currentTime - entry.getValue() > 100000;
+            boolean inactive = currentTime - entry.getValue() > 1000000;
             if (inactive) {
                 this.zooKeeperService.logoutUser(entry.getKey());
+                System.out.println("Removed user due to inactivity: " + entry.getKey());
             }
             return inactive;
         });

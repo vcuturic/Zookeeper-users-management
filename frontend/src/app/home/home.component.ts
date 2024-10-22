@@ -170,13 +170,13 @@ export class HomeComponent implements OnInit, OnDestroy{
       const msg: MessageStructure = JSON.parse(jsonString);
       console.log(msg);
 
-      if(msg.zNode.name === this.authService.getUsername()) {
-        if(msg.operation === Constants.OPERATION_DISCONNECT) {
-          msg.operation = Constants.OPERATION_ERROR;
-          console.log("ERROR happend: " + msg.operation);
-          this.backendService.getNextMessage();
-        }
-      }
+      // if(msg.zNode.name === this.authService.getUsername()) {
+      //   if(msg.operation === Constants.OPERATION_DISCONNECT) {
+      //     msg.operation = Constants.OPERATION_ERROR;
+      //     console.log("ERROR happend: " + msg.operation);
+      //     this.backendService.getNextMessage();
+      //   }
+      // }
 
       if(msg.operation === Constants.OPERATION_CONNECT_OFFLINE) {
           msg.zNode.online = false;

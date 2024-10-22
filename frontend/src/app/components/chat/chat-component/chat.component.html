@@ -1,6 +1,6 @@
 <div class="grid flex chat-container w-max">
   <div class="col user-list bg-dark">
-    <div *ngFor="let user of userNodes" 
+    <div *ngFor="let user of nodesCopy" 
          (click)="selectUser(user.name)" 
          (mouseover)="hoverUser(user.name)"
          [ngClass]="{'selected-user': selectedUser === user.name, 'hovered-user': hoveredUser === user.name}">

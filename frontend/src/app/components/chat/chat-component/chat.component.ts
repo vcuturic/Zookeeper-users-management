@@ -33,6 +33,8 @@ export class ChatComponent implements OnInit {
   users: string[] = []; 
   selectedUser = '';
   hoveredUser = '';
+  globalMessage = "global";
+  nodesCopy: ZNode[] | undefined;
 
   constructor(
     // private chatService: ChatService,
@@ -48,11 +50,11 @@ export class ChatComponent implements OnInit {
 
         if(newMessage.from === newMessage.to) {
           // Global message
-          if (!this.messagesMap[this.username]) {
-            this.messagesMap[this.username] = [];
+          if (!this.messagesMap[this.globalMessage]) {
+            this.messagesMap[this.globalMessage] = [];
           }
 
-          this.messagesMap[this.username].push(newMessage);
+          this.messagesMap[this.globalMessage].push(newMessage);
         }
         else {
           // Private
@@ -80,13 +82,34 @@ export class ChatComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.nodesCopy = JSON.parse(JSON.stringify(this.userNodes));
+      this.updateUserName();
+    }, 0);
+  }
+  
+  updateUserName() {
+    const foundIndex = this.nodesCopy!.findIndex(
+      zNode => zNode.name === this.username
+    );
+
+    // Step 3: If found, update the name to "global"
+    if (foundIndex !== -1) {
+      this.nodesCopy![foundIndex].name = "global";
+    }
+    else {
+      console.warn(`User with name "${this.username}" not found.`);
+    }
+  }
+
   sendMessage() {
     if (this.messageContent.trim()) {
 
       if(this.selectedUser != '') {
         const userMessage: UserMessage = {
           from: this.authService.getUsername(), 
-          to: this.selectedUser, 
+          to: this.selectedUser == "global" ? this.authService.getUsername() : this.selectedUser, 
           text: this.messageContent, 
           read: false
         };

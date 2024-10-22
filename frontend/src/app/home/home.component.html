@@ -14,8 +14,26 @@
             </div>
         </div>
     </div>
-    <div class="flex col justify-content-end align-items-center h-5rem">
-        <p-button label="Logout" [link]="true" icon="pi pi-sign-out" iconPos="right" (onClick)="logout()"/>
+    <div class="flex col justify-content-end align-items-center h-5rem mr-2 mt-1">
+
+        <div class="flex row">
+            <!-- Profile Picture -->
+            <div class="p-mr-2">
+                <img
+                  src="assets/profile.jpg"
+                  alt="profile picture"
+                  class="profile-pic"
+                />
+              </div>
+        </div>
+        <div class="p-d-flex p-ai-center">
+            <!-- Profile Text & Logout -->
+            <div>
+                    
+              <span class="pl-3" style="font-weight: bold; cursor: default; color: #2e3237; text-decoration: underline;">{{ backendUrl }}</span><br>
+              <p-button label="Logout" [link]="true" icon="pi pi-sign-out" styleClass="logoutButton" iconPos="right" (onClick)="logout()"/>
+            </div>
+          </div>
     </div>
 </div>
   
@@ -28,7 +46,7 @@
         <div class="text-center">
             <app-nodes-visual [allNodes]="personNodes" (allNodesChange)="onAllNodesChange($event)"></app-nodes-visual>
         </div>
-        <div class="flex align-items-center justify-content-center">
+        <div class="flex align-items-center justify-content-center mt-3">
             <app-chat [userNodes]="personNodes"></app-chat>
         </div>
     </div>
